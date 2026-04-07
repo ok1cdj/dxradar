@@ -1,0 +1,5 @@
+{
+  "name": "Ham Radio DX Radar",
+  "description": "A real-time dashboard for radio amateurs to track active DX expeditions, integrated with Club Log for QSO status and live DX spots from Cluster and RBN.",
+  "requestFramePermissions": []
+}

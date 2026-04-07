@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, HelpCircle, Radio, Settings, Globe, Zap, CheckCircle2, Circle } from 'lucide-react';
+import { X, HelpCircle, Radio, Settings, Globe, Zap, CheckCircle2, Circle, Mail, Coffee } from 'lucide-react';
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -110,6 +110,31 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                     <span>Use the <strong>Refresh</strong> button in the header to manually reload the expedition list.</span>
                   </li>
                 </ul>
+              </section>
+
+              <section className="space-y-4 pt-4 border-t border-white/5">
+                <h3 className="text-emerald-500 font-bold uppercase tracking-wider text-xs">Feedback & Support</h3>
+                <p className="text-zinc-300 text-sm leading-relaxed">
+                  Feedback is welcome! If you have any questions or suggestions, feel free to reach out.
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  <a 
+                    href="mailto:ondra@ok1cdj.com" 
+                    className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl transition-colors text-zinc-300 hover:text-white text-sm"
+                  >
+                    <Mail className="w-4 h-4 text-emerald-500" />
+                    ondra@ok1cdj.com
+                  </a>
+                  <a 
+                    href="https://buymeacoffee.com/ok1cdj" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#FFDD00]/10 hover:bg-[#FFDD00]/20 border border-[#FFDD00]/20 rounded-xl transition-colors text-[#FFDD00] text-sm font-bold"
+                  >
+                    <Coffee className="w-4 h-4" />
+                    Buy Me a Coffee
+                  </a>
+                </div>
               </section>
             </div>
 

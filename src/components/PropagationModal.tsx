@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Sun, Activity, TrendingUp, Info } from 'lucide-react';
+import { X, Sun, Activity, TrendingUp, Info, AlertTriangle } from 'lucide-react';
 
 interface BandStatus {
   val: number;
@@ -14,6 +14,10 @@ interface BandStatus {
 interface PropagationData {
   sfi: number;
   kp: number;
+  storm?: {
+    probability: number;
+    predicted_kp: number;
+  };
   bands: {
     [key: string]: BandStatus;
   };
@@ -60,12 +64,33 @@ export default function PropagationModal({ isOpen, onClose, data }: PropagationM
                 <span className="text-xs font-bold uppercase tracking-widest text-zinc-500">Solar Flux Index</span>
                 <span className="text-3xl font-black text-white">{data.sfi}</span>
               </div>
-              <div className="bg-white/5 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center gap-2">
+              <div className="bg-white/5 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 relative overflow-hidden">
                 <Activity className="w-8 h-8 text-emerald-500" />
                 <span className="text-xs font-bold uppercase tracking-widest text-zinc-500">Kp Index</span>
                 <span className={`text-3xl font-black ${data.kp >= 4 ? 'text-rose-500' : 'text-white'}`}>{data.kp}</span>
+                
+                {data.storm && data.storm.probability >= 30 && (
+                  <div className={`absolute bottom-0 inset-x-0 py-1 text-[9px] font-bold uppercase text-center ${data.storm.probability >= 50 ? 'bg-rose-500 text-white' : 'bg-amber-500 text-black'}`}>
+                    Storm Prob: {data.storm.probability}% → Kp {data.storm.predicted_kp}
+                  </div>
+                )}
               </div>
             </div>
+
+            {data.storm && data.storm.probability >= 50 && (
+              <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center gap-4 animate-pulse">
+                <div className="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-6 h-6 text-rose-500" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-rose-500 uppercase tracking-wider">Geomagnetic Storm Warning</h4>
+                  <p className="text-xs text-rose-200/70">
+                    High probability ({data.storm.probability}%) of a geomagnetic storm reaching Kp {data.storm.predicted_kp}. 
+                    Expect degraded HF propagation, especially on higher bands and polar paths.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Band Table */}
             <div className="space-y-4">

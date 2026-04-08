@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sun, Activity } from 'lucide-react';
+import { Sun, Activity, AlertTriangle } from 'lucide-react';
 import PropagationModal from './PropagationModal';
 
 interface BandStatus {
@@ -12,6 +12,10 @@ interface BandStatus {
 interface PropagationData {
   sfi: number;
   kp: number;
+  storm?: {
+    probability: number;
+    predicted_kp: number;
+  };
   bands: {
     [key: string]: BandStatus;
   };
@@ -72,6 +76,12 @@ export default function GlobalPropagationBar() {
             <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Kp</span>
             <span className={`text-xs font-mono font-bold ${data.kp >= 4 ? 'text-rose-500' : 'text-white'}`}>{data.kp}</span>
           </div>
+          {data.storm && data.storm.probability >= 50 && (
+            <div className="flex items-center gap-1 px-2 py-0.5 bg-rose-500/20 border border-rose-500/30 rounded-full animate-pulse">
+              <AlertTriangle className="w-3 h-3 text-rose-500" />
+              <span className="text-[9px] font-bold text-rose-500 uppercase">Storm Alert</span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-4 shrink-0">

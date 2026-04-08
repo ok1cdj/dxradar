@@ -221,6 +221,7 @@ async function startServer() {
       const transformed: any = {
         sfi: data.solar?.sfi || 0,
         kp: data.solar?.kp || 0,
+        storm: data.storm || null,
         bands: {}
       };
 

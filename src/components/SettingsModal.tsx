@@ -9,6 +9,7 @@ export interface Settings {
   spotLifetime: number;
   manualCallsigns: string;
   hideConfirmed: boolean;
+  onlyMyContinent: boolean;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -17,7 +18,8 @@ const DEFAULT_SETTINGS: Settings = {
   myCallsign: '',
   spotLifetime: 30,
   manualCallsigns: '',
-  hideConfirmed: false
+  hideConfirmed: false,
+  onlyMyContinent: false
 };
 
 interface SettingsModalProps {
@@ -171,17 +173,42 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                 />
               </div>
 
-              <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
-                <input 
-                  type="checkbox" 
-                  id="hideConfirmed"
-                  checked={settings.hideConfirmed}
-                  onChange={e => setSettings({...settings, hideConfirmed: e.target.checked})}
-                  className="w-4 h-4 rounded border-white/10 bg-zinc-800 text-emerald-500 focus:ring-emerald-500/50"
-                />
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
                 <label htmlFor="hideConfirmed" className="text-sm font-medium text-zinc-300 cursor-pointer select-none">
                   Hide confirmed bands/modes from tiles
                 </label>
+                <button
+                  type="button"
+                  id="hideConfirmed"
+                  onClick={() => setSettings({...settings, hideConfirmed: !settings.hideConfirmed})}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
+                    settings.hideConfirmed ? 'bg-emerald-500' : 'bg-zinc-700'
+                  }`}
+                >
+                  <motion.span
+                    animate={{ x: settings.hideConfirmed ? 18 : 2 }}
+                    className="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm"
+                  />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                <label htmlFor="onlyMyContinent" className="text-sm font-medium text-zinc-300 cursor-pointer select-none">
+                  Show spots from my continent only
+                </label>
+                <button
+                  type="button"
+                  id="onlyMyContinent"
+                  onClick={() => setSettings({...settings, onlyMyContinent: !settings.onlyMyContinent})}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
+                    settings.onlyMyContinent ? 'bg-emerald-500' : 'bg-zinc-700'
+                  }`}
+                >
+                  <motion.span
+                    animate={{ x: settings.onlyMyContinent ? 18 : 2 }}
+                    className="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm"
+                  />
+                </button>
               </div>
             </div>
 

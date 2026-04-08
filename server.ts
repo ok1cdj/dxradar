@@ -97,6 +97,81 @@ function getBandFromFreq(freqKhz: number): string {
 async function startServer() {
   const app = express();
   const server = http.createServer(app);
+  // Prefix to Continent mapping (simplified)
+  const PREFIX_TO_CONTINENT: { [key: string]: string } = {
+    '1A': 'EU', '1S': 'AS', '3A': 'EU', '3B': 'AF', '3C': 'AF', '3D': 'AF', '3V': 'AF', '3W': 'AS', '3X': 'AF', '3Y': 'AN',
+    '4A': 'NA', '4B': 'NA', '4C': 'NA', '4D': 'AS', '4E': 'AS', '4F': 'AS', '4G': 'AS', '4H': 'AS', '4I': 'AS', '4J': 'AS',
+    '4K': 'AS', '4L': 'AS', '4M': 'SA', '4N': 'EU', '4O': 'EU', '4P': 'AS', '4Q': 'AS', '4R': 'AS', '4S': 'AS', '4T': 'SA',
+    '4U': 'EU', '4V': 'NA', '4W': 'OC', '4X': 'AS', '4Y': 'EU', '4Z': 'AS', '5A': 'AF', '5B': 'AS', '5C': 'AF', '5D': 'AF',
+    '5E': 'AF', '5F': 'AF', '5G': 'AF', '5H': 'AF', '5I': 'AF', '5J': 'SA', '5K': 'SA', '5L': 'AF', '5M': 'AF', '5N': 'AF',
+    '5O': 'AF', '5P': 'EU', '5Q': 'EU', '5R': 'AF', '5S': 'AF', '5T': 'AF', '5U': 'AF', '5V': 'AF', '5W': 'OC', '5X': 'AF',
+    '5Y': 'AF', '5Z': 'AF', '6A': 'AF', '6B': 'AF', '6C': 'AF', '6D': 'NA', '6E': 'NA', '6F': 'NA', '6G': 'NA', '6H': 'NA',
+    '6I': 'NA', '6J': 'NA', '6K': 'AS', '6L': 'AS', '6M': 'AS', '6N': 'AS', '6O': 'AF', '6P': 'AS', '6Q': 'AS', '6R': 'AS',
+    '6S': 'AS', '6T': 'AF', '6U': 'AF', '6V': 'AF', '6W': 'AF', '6X': 'AF', '6Y': 'NA', '6Z': 'AF', '7A': 'AS', '7B': 'AS',
+    '7C': 'AS', '7D': 'AS', '7E': 'AS', '7F': 'AS', '7G': 'AS', '7H': 'AS', '7I': 'AS', '7J': 'AS', '7K': 'AS', '7L': 'AS',
+    '7M': 'AS', '7N': 'AS', '7O': 'AS', '7P': 'AF', '7Q': 'AF', '7R': 'AF', '7S': 'EU', '7T': 'AF', '7U': 'AF', '7V': 'AF',
+    '7W': 'AF', '7X': 'AF', '7Y': 'AF', '7Z': 'AS', '8A': 'OC', '8B': 'OC', '8C': 'OC', '8D': 'OC', '8E': 'OC', '8F': 'OC',
+    '8G': 'OC', '8H': 'OC', '8I': 'OC', '8J': 'AS', '8K': 'AS', '8L': 'AS', '8M': 'AS', '8N': 'AS', '8O': 'AS', '8P': 'NA',
+    '8Q': 'AS', '8R': 'SA', '8S': 'EU', '8T': 'AS', '8U': 'AS', '8V': 'AS', '8W': 'AS', '8X': 'AS', '8Y': 'AN', '8Z': 'AS',
+    '9A': 'EU', '9B': 'AS', '9C': 'AS', '9D': 'AS', '9E': 'AF', '9F': 'AF', '9G': 'AF', '9H': 'EU', '9I': 'AF', '9J': 'AF',
+    '9K': 'AS', '9L': 'AF', '9M': 'AS', '9N': 'AS', '9O': 'AF', '9P': 'AF', '9Q': 'AF', '9R': 'AF', '9S': 'AF', '9T': 'AF',
+    '9U': 'AF', '9V': 'AS', '9W': 'AS', '9X': 'AF', '9Y': 'SA', '9Z': 'SA', 'A2': 'AF', 'A3': 'OC', 'A4': 'AS', 'A5': 'AS',
+    'A6': 'AS', 'A7': 'AS', 'A9': 'AS', 'B': 'AS', 'C2': 'OC', 'C3': 'EU', 'C4': 'AS', 'C5': 'AF', 'C6': 'NA', 'C9': 'AF',
+    'CA': 'SA', 'CB': 'SA', 'CC': 'SA', 'CD': 'SA', 'CE': 'SA', 'CF': 'NA', 'CG': 'NA', 'CH': 'NA', 'CI': 'NA', 'CJ': 'NA',
+    'CK': 'NA', 'CL': 'NA', 'CM': 'NA', 'CN': 'AF', 'CO': 'NA', 'CP': 'SA', 'CQ': 'EU', 'CR': 'EU', 'CS': 'EU', 'CT': 'EU',
+    'CU': 'EU', 'CV': 'SA', 'CW': 'SA', 'CX': 'SA', 'CY': 'NA', 'CZ': 'NA', 'D2': 'AF', 'D3': 'AF', 'D4': 'AF', 'D6': 'AF',
+    'DA': 'EU', 'DB': 'EU', 'DC': 'EU', 'DD': 'EU', 'DE': 'EU', 'DF': 'EU', 'DG': 'EU', 'DH': 'EU', 'DI': 'EU', 'DJ': 'EU',
+    'DK': 'EU', 'DL': 'EU', 'DM': 'EU', 'DN': 'EU', 'DO': 'EU', 'DP': 'EU', 'DQ': 'EU', 'DR': 'EU', 'DS': 'AS', 'DT': 'AS',
+    'DU': 'OC', 'DV': 'OC', 'DW': 'OC', 'DX': 'OC', 'DY': 'OC', 'DZ': 'OC', 'E2': 'AS', 'E3': 'AF', 'E4': 'AS', 'E5': 'OC',
+    'E7': 'EU', 'EA': 'EU', 'EB': 'EU', 'EC': 'EU', 'ED': 'EU', 'EE': 'EU', 'EF': 'EU', 'EG': 'EU', 'EH': 'EU', 'EI': 'EU',
+    'EJ': 'EU', 'EK': 'AS', 'EL': 'AF', 'EM': 'EU', 'EN': 'EU', 'EO': 'EU', 'EP': 'AS', 'EQ': 'AS', 'ER': 'EU', 'ES': 'EU',
+    'ET': 'AF', 'EU': 'EU', 'EV': 'EU', 'EW': 'EU', 'EX': 'AS', 'EY': 'AS', 'EZ': 'AS', 'F': 'EU', 'G': 'EU', 'H2': 'AS',
+    'H3': 'NA', 'H4': 'OC', 'H6': 'NA', 'H7': 'NA', 'H8': 'NA', 'H9': 'NA', 'HA': 'EU', 'HB': 'EU', 'HC': 'SA', 'HD': 'SA',
+    'HE': 'EU', 'HF': 'EU', 'HG': 'EU', 'HH': 'NA', 'HI': 'NA', 'HJ': 'SA', 'HK': 'SA', 'HL': 'AS', 'HM': 'AS', 'HN': 'AS',
+    'HO': 'NA', 'HP': 'NA', 'HQ': 'NA', 'HR': 'NA', 'HS': 'AS', 'HT': 'NA', 'HU': 'NA', 'HV': 'EU', 'HW': 'EU', 'HX': 'EU',
+    'HY': 'EU', 'HZ': 'AS', 'I': 'EU', 'J2': 'AF', 'J3': 'NA', 'J4': 'EU', 'J5': 'AF', 'J6': 'NA', 'J7': 'NA', 'J8': 'NA',
+    'JA': 'AS', 'JB': 'AS', 'JC': 'AS', 'JD': 'AS', 'JE': 'AS', 'JF': 'AS', 'JG': 'AS', 'JH': 'AS', 'JI': 'AS', 'JJ': 'AS',
+    'JK': 'AS', 'JL': 'AS', 'JM': 'AS', 'JN': 'AS', 'JO': 'AS', 'JP': 'AS', 'JQ': 'AS', 'JR': 'AS', 'JS': 'AS', 'JT': 'AS',
+    'JU': 'AS', 'JV': 'AS', 'JW': 'EU', 'JX': 'EU', 'JY': 'AS', 'K': 'NA', 'L': 'SA', 'LA': 'EU', 'LB': 'EU', 'LC': 'EU',
+    'LD': 'EU', 'LE': 'EU', 'LF': 'EU', 'LG': 'EU', 'LH': 'EU', 'LI': 'EU', 'LJ': 'EU', 'LK': 'EU', 'LL': 'EU', 'LM': 'EU',
+    'LN': 'EU', 'LO': 'SA', 'LP': 'SA', 'LQ': 'SA', 'LR': 'SA', 'LS': 'SA', 'LT': 'SA', 'LU': 'SA', 'LV': 'SA', 'LW': 'SA',
+    'LX': 'EU', 'LY': 'EU', 'LZ': 'EU', 'M': 'EU', 'N': 'NA', 'OA': 'SA', 'OB': 'SA', 'OC': 'SA', 'OD': 'AS', 'OE': 'EU',
+    'OF': 'EU', 'OG': 'EU', 'OH': 'EU', 'OI': 'EU', 'OJ': 'EU', 'OK': 'EU', 'OL': 'EU', 'OM': 'EU', 'ON': 'EU', 'OO': 'EU',
+    'OP': 'AS', 'OQ': 'AS', 'OR': 'EU', 'OS': 'EU', 'OT': 'EU', 'OU': 'EU', 'OV': 'EU', 'OW': 'EU', 'OX': 'NA', 'OY': 'EU',
+    'OZ': 'EU', 'P2': 'OC', 'P4': 'SA', 'P5': 'AS', 'PA': 'EU', 'PB': 'EU', 'PC': 'EU', 'PD': 'EU', 'PE': 'EU', 'PF': 'EU',
+    'PG': 'EU', 'PH': 'EU', 'PI': 'EU', 'PJ': 'SA', 'PK': 'OC', 'PL': 'OC', 'PM': 'OC', 'PN': 'OC', 'PO': 'OC', 'PP': 'SA',
+    'PQ': 'SA', 'PR': 'SA', 'PS': 'SA', 'PT': 'SA', 'PU': 'SA', 'PV': 'SA', 'PW': 'SA', 'PX': 'SA', 'PY': 'SA', 'PZ': 'SA',
+    'R': 'EU', 'S': 'EU', 'T': 'EU', 'U': 'AS', 'V': 'NA', 'W': 'NA', 'X': 'NA', 'Y': 'SA', 'Z': 'EU',
+    'UA': 'EU', 'UB': 'EU', 'UC': 'EU', 'UD': 'AS', 'UE': 'AS', 'UF': 'AS', 'UG': 'AS', 'UH': 'AS', 'UI': 'AS', 'UJ': 'AS',
+    'XE': 'NA', 'XF': 'NA', 'XG': 'NA', 'XH': 'NA', 'XI': 'NA', 'XJ': 'NA', 'XK': 'NA', 'XL': 'NA', 'XM': 'NA', 'XN': 'NA',
+    'XO': 'NA', 'XP': 'NA', 'XQ': 'SA', 'XR': 'SA', 'XS': 'AS', 'XT': 'AF', 'XU': 'AS', 'XV': 'AS', 'XW': 'AS', 'XX': 'AS',
+    'XY': 'AS', 'XZ': 'AS', 'YA': 'AS', 'YB': 'OC', 'YC': 'OC', 'YD': 'OC', 'YE': 'OC', 'YF': 'OC', 'YG': 'OC', 'YH': 'OC',
+    'YI': 'AS', 'YJ': 'OC', 'YK': 'AS', 'YL': 'EU', 'YM': 'AS', 'YN': 'NA', 'YO': 'EU', 'YP': 'EU', 'YQ': 'EU', 'YR': 'EU',
+    'YS': 'NA', 'YT': 'EU', 'YU': 'EU', 'YV': 'SA', 'YW': 'SA', 'YX': 'SA', 'YY': 'SA', 'YZ': 'SA', 'Z2': 'AF', 'Z3': 'EU',
+    'Z6': 'EU', 'Z8': 'AF', 'ZA': 'EU', 'ZB': 'EU', 'ZC': 'AS', 'ZD': 'AF', 'ZE': 'AF', 'ZF': 'NA', 'ZG': 'EU', 'ZH': 'EU',
+    'ZI': 'EU', 'ZJ': 'EU', 'ZK': 'OC', 'ZL': 'OC', 'ZM': 'OC', 'ZN': 'OC', 'ZO': 'OC', 'ZP': 'SA', 'ZQ': 'OC', 'ZR': 'AF',
+    'ZS': 'AF', 'ZT': 'AF', 'ZU': 'AF', 'ZV': 'SA', 'ZW': 'SA', 'ZX': 'SA', 'ZY': 'SA', 'ZZ': 'SA'
+  };
+
+  function getContinentFromCallsign(callsign: string): string {
+    if (!callsign) return "Unknown";
+    const call = callsign.toUpperCase();
+    
+    // Try 2-char prefix
+    const p2 = call.substring(0, 2);
+    if (PREFIX_TO_CONTINENT[p2]) return PREFIX_TO_CONTINENT[p2];
+    
+    // Try 1-char prefix
+    const p1 = call.substring(0, 1);
+    if (PREFIX_TO_CONTINENT[p1]) return PREFIX_TO_CONTINENT[p1];
+    
+    // Special case for USA (K, W, N, A)
+    if (['K', 'W', 'N'].includes(p1)) return "NA";
+    if (p1 === 'A' && call.length > 1 && call[1] >= 'A' && call[1] <= 'L') return "NA";
+    
+    return "Unknown";
+  }
+
   const wss = new WebSocketServer({ noServer: true });
   const PORT = process.env.PORT || 3000;
   const rssParser = new Parser();
@@ -129,6 +204,85 @@ async function startServer() {
   const spotsCache: any[] = [];
   const MAX_SPOTS = 2000;
   let activeCallsigns: string[] = [];
+  let propagationData: any = null;
+
+  async function fetchPropagationData() {
+    try {
+      console.log("Fetching propagation data...");
+      const response = await fetch("https://wspr.hb9vqq.ch/api/dx.json", {
+        headers: {
+          'User-Agent': 'DX-Radar-App/1.0'
+        }
+      });
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      
+      // Transform data based on dx.py rules
+      const transformed: any = {
+        sfi: data.solar?.sfi || 0,
+        kp: data.solar?.kp || 0,
+        bands: {}
+      };
+
+      const bands = ["160m", "80m", "60m", "40m", "30m", "20m", "17m", "15m", "12m", "10m"];
+      bands.forEach(band => {
+        const bandData = data.bands?.[band];
+        if (bandData && bandData.index !== undefined) {
+          const val = bandData.index;
+          const forecast = bandData.forecast;
+          const forecastRating = bandData.forecast_rating;
+          
+          let status = "Poor";
+          let color = "#ef4444";
+          
+          if (val >= 70) {
+            status = "Excellent";
+            color = "#3b82f6";
+          } else if (val >= 50) {
+            status = "Good";
+            color = "#10b981";
+          } else if (val >= 35) {
+            status = "Fair";
+            color = "#f59e0b";
+          }
+
+          let forecastColor = "#ef4444";
+          if (forecast >= 70) forecastColor = "#3b82f6";
+          else if (forecast >= 50) forecastColor = "#10b981";
+          else if (forecast >= 35) forecastColor = "#f59e0b";
+          
+          transformed.bands[band] = { 
+            val, 
+            status, 
+            color,
+            forecast,
+            forecastRating,
+            forecastColor
+          };
+        }
+      });
+
+      propagationData = transformed;
+      broadcastPropagationData();
+      console.log("Propagation data updated.");
+    } catch (err) {
+      console.error("Failed to fetch propagation data:", err);
+    }
+  }
+
+  function broadcastPropagationData() {
+    if (!propagationData) return;
+    const message = JSON.stringify({ type: "propagation", data: propagationData });
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  }
+
+  // Fetch propagation data every 5 minutes
+  setInterval(fetchPropagationData, 5 * 60 * 1000);
+  fetchPropagationData(); // Initial fetch
 
   let currentSettings = {
     dxClusterHost: process.env.DX_CLUSTER_HOST || "ve7cc.net",
@@ -391,6 +545,7 @@ async function startServer() {
             const comment = match[4].trim();
             const time = match[5];
             const isSkimmer = spotter.includes("#") || comment.includes("dB") || comment.includes("WPM");
+            const spotterCont = getContinentFromCallsign(spotter);
 
             // Try to extract mode from comment if not obvious
             let mode = "";
@@ -415,6 +570,7 @@ async function startServer() {
             const spot = {
               id: Date.now() + Math.random().toString(36).substr(2, 9),
               spotter,
+              spotterCont,
               freq,
               dxCall,
               mode,
@@ -496,6 +652,10 @@ async function startServer() {
   const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 
   // Fetch DX Expeditions from NG3K RSS
+  app.get("/api/propagation", (req, res) => {
+    res.json(propagationData || { error: "Data not available yet" });
+  });
+
   app.get("/api/expeditions", async (req, res) => {
     const now = Date.now();
     

@@ -1,27 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Sun, Activity, TrendingUp, Info, AlertTriangle } from 'lucide-react';
-
-interface BandStatus {
-  val: number;
-  status: string;
-  color: string;
-  forecast: number;
-  forecastRating: string;
-  forecastColor: string;
-}
-
-interface PropagationData {
-  sfi: number;
-  kp: number;
-  storm?: {
-    probability: number;
-    predicted_kp: number;
-  };
-  bands: {
-    [key: string]: BandStatus;
-  };
-}
+import { PropagationData } from '../types';
 
 interface PropagationModalProps {
   isOpen: boolean;

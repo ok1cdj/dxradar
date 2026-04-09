@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Clock, Radio, User, Zap } from 'lucide-react';
+import { X, Clock, Radio, User, Zap, Sparkles, Loader2, BrainCircuit } from 'lucide-react';
+import { GoogleGenAI } from "@google/genai";
+import Markdown from 'react-markdown';
 
 interface Spot {
   id: string;
@@ -11,6 +13,7 @@ interface Spot {
   comment?: string;
   time: string;
   isSkimmer: boolean;
+  spotterCont?: string;
   timestamp: string;
 }
 
@@ -21,9 +24,65 @@ interface SpotsModalProps {
   band: string;
   mode: string;
   spots: Spot[];
+  userContinent?: string;
 }
 
-export default function SpotsModal({ isOpen, onClose, callsign, band, mode, spots }: SpotsModalProps) {
+export default function SpotsModal({ isOpen, onClose, callsign, band, mode, spots, userContinent }: SpotsModalProps) {
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const analyzeWithAI = async () => {
+    if (spots.length === 0) return;
+    setIsAnalyzing(true);
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      
+      const spotsContext = spots.map(s => ({
+        spotter: s.spotter,
+        continent: s.spotterCont || 'Unknown',
+        freq: s.freq,
+        mode: s.mode,
+        comment: s.comment || '',
+        isSkimmer: s.isSkimmer
+      }));
+
+      const prompt = `
+        Analyze these 10 DX spots for ${callsign} on ${band} ${mode}.
+        User location: ${userContinent || 'Unknown'}.
+        
+        Spots: ${JSON.stringify(spotsContext)}
+        
+        Task: Provide a VERY CONCISE summary (max 2 short bullet points).
+        - Highlight **SPLIT** info (UP/QSX) in bold if found.
+        - Highlight **SIGNAL STRENGTH** in bold (prioritize reports from ${userContinent}).
+        - If CW, mention **WPM** in bold.
+        
+        Example format:
+        - Operating **SPLIT UP 5-10**.
+        - Strong signals in **${userContinent}** (avg 20dB).
+      `;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+      });
+
+      setAiSummary(response.text || "Could not generate summary.");
+    } catch (error) {
+      console.error("AI Analysis failed:", error);
+      setAiSummary("Error: AI analysis failed. Please check your API key configuration.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // Reset AI summary when modal closes or spots change
+  React.useEffect(() => {
+    if (!isOpen) {
+      setAiSummary(null);
+      setIsAnalyzing(false);
+    }
+  }, [isOpen]);
   return (
     <AnimatePresence>
       {isOpen && (
@@ -62,6 +121,54 @@ export default function SpotsModal({ isOpen, onClose, callsign, band, mode, spot
                 <X className="w-6 h-6" />
               </button>
             </div>
+
+            {/* AI Summary Section */}
+            {spots.length > 0 && (
+              <div className="px-6 py-4 bg-zinc-800/50 border-b border-white/5">
+                {!aiSummary && !isAnalyzing ? (
+                  <button
+                    onClick={analyzeWithAI}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs font-bold rounded-xl border border-blue-500/20 transition-all group"
+                  >
+                    <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                    Analyze with Gemini AI
+                  </button>
+                ) : isAnalyzing ? (
+                  <div className="flex items-center gap-3 text-blue-400 text-xs font-bold animate-pulse">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Gemini is analyzing spots...
+                  </div>
+                ) : (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-blue-500/5 border border-blue-500/10 rounded-2xl p-4"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2 text-blue-400 text-[10px] font-black uppercase tracking-widest">
+                        <BrainCircuit className="w-4 h-4" />
+                        AI Insight
+                      </div>
+                      <button 
+                        onClick={() => setAiSummary(null)}
+                        className="text-[10px] text-zinc-500 hover:text-zinc-300 uppercase font-bold"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                    <div className="text-xs text-zinc-300 leading-relaxed max-w-none">
+                      <Markdown components={{
+                        strong: ({node, ...props}) => <span className="font-black text-blue-400" {...props} />,
+                        ul: ({node, ...props}) => <ul className="list-disc ml-4 space-y-1" {...props} />,
+                        li: ({node, ...props}) => <li className="marker:text-blue-500/50" {...props} />
+                      }}>
+                        {aiSummary}
+                      </Markdown>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            )}
 
             {/* Content */}
             <div className="flex-grow overflow-y-auto p-2 custom-scrollbar">
@@ -110,7 +217,9 @@ export default function SpotsModal({ isOpen, onClose, callsign, band, mode, spot
 
                       <div className="flex justify-center">
                         {spot.isSkimmer ? (
-                          <Zap className="w-3 h-3 text-purple-500/50" title="RBN Spot" />
+                          <span title="RBN Spot">
+                            <Zap className="w-3 h-3 text-purple-500/50" />
+                          </span>
                         ) : (
                           <div className="w-3 h-3" />
                         )}

@@ -2,24 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sun, Activity, AlertTriangle } from 'lucide-react';
 import PropagationModal from './PropagationModal';
-
-interface BandStatus {
-  val: number;
-  status: string;
-  color: string;
-}
-
-interface PropagationData {
-  sfi: number;
-  kp: number;
-  storm?: {
-    probability: number;
-    predicted_kp: number;
-  };
-  bands: {
-    [key: string]: BandStatus;
-  };
-}
+import { PropagationData } from '../types';
 
 export default function GlobalPropagationBar() {
   const [data, setData] = useState<PropagationData | null>(null);

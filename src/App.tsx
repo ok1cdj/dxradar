@@ -180,6 +180,8 @@ export default function App() {
     onlyMyContinent: false
   });
 
+  const userContinent = useMemo(() => getContinentFromCallsign(settings.myCallsign), [settings.myCallsign]);
+
   const [isChartLoading, setIsChartLoading] = useState(false);
 
   // Load and sync settings on mount
@@ -693,6 +695,7 @@ export default function App() {
           band={selectedBand}
           mode={selectedMode}
           spots={filteredSpotsForModal}
+          userContinent={userContinent}
         />
 
         {Object.keys(activeExpeditionsData).length === 0 && !loading && (

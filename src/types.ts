@@ -12,3 +12,24 @@ export interface BandModeStatus {
     [mode: string]: 'worked' | 'confirmed' | 'needed';
   };
 }
+
+export interface BandStatus {
+  val: number;
+  status: string;
+  color: string;
+  forecast: number;
+  forecastRating: string;
+  forecastColor: string;
+}
+
+export interface PropagationData {
+  sfi: number;
+  kp: number;
+  storm?: {
+    probability: number;
+    predicted_kp: number;
+  };
+  bands: {
+    [key: string]: BandStatus;
+  };
+}

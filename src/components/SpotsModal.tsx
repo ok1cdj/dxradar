@@ -25,17 +25,18 @@ interface SpotsModalProps {
   mode: string;
   spots: Spot[];
   userContinent?: string;
+  geminiApiKey?: string;
 }
 
-export default function SpotsModal({ isOpen, onClose, callsign, band, mode, spots, userContinent }: SpotsModalProps) {
+export default function SpotsModal({ isOpen, onClose, callsign, band, mode, spots, userContinent, geminiApiKey }: SpotsModalProps) {
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const analyzeWithAI = async () => {
-    if (spots.length === 0) return;
+    if (spots.length === 0 || !geminiApiKey) return;
     setIsAnalyzing(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const ai = new GoogleGenAI({ apiKey: geminiApiKey });
       
       const spotsContext = spots.map(s => ({
         spotter: s.spotter,
@@ -126,13 +127,25 @@ export default function SpotsModal({ isOpen, onClose, callsign, band, mode, spot
             {spots.length > 0 && (
               <div className="px-6 py-4 bg-zinc-800/50 border-b border-white/5">
                 {!aiSummary && !isAnalyzing ? (
-                  <button
-                    onClick={analyzeWithAI}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs font-bold rounded-xl border border-blue-500/20 transition-all group"
-                  >
-                    <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                    Analyze with Gemini AI
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={analyzeWithAI}
+                      disabled={!geminiApiKey}
+                      className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl border transition-all group ${
+                        geminiApiKey 
+                          ? 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border-blue-500/20' 
+                          : 'bg-zinc-500/5 text-zinc-600 border-white/5 cursor-not-allowed'
+                      }`}
+                    >
+                      <Sparkles className={`w-4 h-4 ${geminiApiKey ? 'group-hover:rotate-12 transition-transform' : ''}`} />
+                      Analyze with Gemini AI
+                    </button>
+                    {!geminiApiKey && (
+                      <span className="text-[10px] text-zinc-600 font-medium italic">
+                        Set Gemini API Key in Settings to enable
+                      </span>
+                    )}
+                  </div>
                 ) : isAnalyzing ? (
                   <div className="flex items-center gap-3 text-blue-400 text-xs font-bold animate-pulse">
                     <Loader2 className="w-4 h-4 animate-spin" />

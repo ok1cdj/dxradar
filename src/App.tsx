@@ -177,7 +177,8 @@ export default function App() {
     spotLifetime: 30,
     manualCallsigns: '',
     hideConfirmed: false,
-    onlyMyContinent: false
+    onlyMyContinent: false,
+    geminiApiKey: ''
   });
 
   const userContinent = useMemo(() => getContinentFromCallsign(settings.myCallsign), [settings.myCallsign]);
@@ -696,6 +697,7 @@ export default function App() {
           mode={selectedMode}
           spots={filteredSpotsForModal}
           userContinent={userContinent}
+          geminiApiKey={settings.geminiApiKey}
         />
 
         {Object.keys(activeExpeditionsData).length === 0 && !loading && (

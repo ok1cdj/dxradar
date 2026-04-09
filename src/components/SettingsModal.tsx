@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Server, Radio, Key, Globe, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { X, Save, Server, Radio, Key, Globe, CheckCircle2, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export interface Settings {
@@ -10,6 +10,7 @@ export interface Settings {
   manualCallsigns: string;
   hideConfirmed: boolean;
   onlyMyContinent: boolean;
+  geminiApiKey: string;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -19,7 +20,8 @@ const DEFAULT_SETTINGS: Settings = {
   spotLifetime: 30,
   manualCallsigns: '',
   hideConfirmed: false,
-  onlyMyContinent: false
+  onlyMyContinent: false,
+  geminiApiKey: ''
 };
 
 interface SettingsModalProps {
@@ -209,6 +211,31 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                     className="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm"
                   />
                 </button>
+              </div>
+            </div>
+
+            {/* AI Settings */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                  <Sparkles className="w-3 h-3 text-blue-400" /> AI Analysis
+                </h3>
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1 ml-1">Gemini API Key</label>
+                <div className="relative">
+                  <input 
+                    type="password" 
+                    value={settings.geminiApiKey}
+                    onChange={e => setSettings({...settings, geminiApiKey: e.target.value})}
+                    placeholder="Enter your Gemini API Key"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 pl-10 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                  />
+                  <Key className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                </div>
+                <p className="mt-1.5 text-[9px] text-zinc-500 leading-relaxed px-1">
+                  Required for AI spot analysis. Your key is stored locally in your browser.
+                </p>
               </div>
             </div>
 

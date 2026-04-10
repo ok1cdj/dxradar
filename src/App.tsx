@@ -16,6 +16,7 @@ import ClusterStatusBar from './components/ClusterStatusBar';
 import ExpeditionTile from './components/ExpeditionTile';
 import SpotsModal from './components/SpotsModal';
 import StatusModal from './components/StatusModal';
+import ExpeditionsModal from './components/ExpeditionsModal';
 import GlobalPropagationBar from './components/GlobalPropagationBar';
 import { AIAnalysis } from './types';
 import { generateAIAnalysis } from './services/aiService';
@@ -158,6 +159,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isExpeditionsModalOpen, setIsExpeditionsModalOpen] = useState(false);
   const [lastClubLogCheck, setLastClubLogCheck] = useState<{ [key: string]: number }>({});
   const [clusterStatus, setClusterStatus] = useState<'Connected' | 'Connecting' | 'Disconnected'>('Disconnected');
   const [wsConnected, setWsConnected] = useState(false);
@@ -666,6 +668,13 @@ export default function App() {
               <HelpCircle className="w-5 h-5" />
             </button>
             <button 
+              onClick={() => setIsExpeditionsModalOpen(true)}
+              className="p-2 hover:bg-white/5 rounded-full transition-colors text-zinc-500 hover:text-white"
+              title="All Expeditions"
+            >
+              <Globe className="w-5 h-5" />
+            </button>
+            <button 
               onClick={fetchExpeditions}
               className="p-2 hover:bg-white/5 rounded-full transition-colors text-zinc-500 hover:text-white"
               title="Refresh Expeditions"
@@ -699,6 +708,12 @@ export default function App() {
         onClose={() => setIsStatusModalOpen(false)}
         callsign={selectedStatusCallsign}
         status={expeditionStatus[selectedStatusCallsign] || { dxccConfirmed: false, dxccWorked: false, bandModeStatus: {} }}
+      />
+
+      <ExpeditionsModal 
+        isOpen={isExpeditionsModalOpen}
+        onClose={() => setIsExpeditionsModalOpen(false)}
+        expeditions={allExpeditions}
       />
 
       <main className="w-full px-6 py-12 pb-32">

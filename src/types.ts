@@ -7,6 +7,12 @@ export interface Expedition {
   websiteUrl?: string;
 }
 
+export interface AIAnalysis {
+  summary: string;
+  timestamp: number;
+  spotCount: number;
+}
+
 export interface BandModeStatus {
   [band: string]: {
     [mode: string]: 'worked' | 'confirmed' | 'needed';

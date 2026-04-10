@@ -17,8 +17,10 @@ import ExpeditionTile from './components/ExpeditionTile';
 import SpotsModal from './components/SpotsModal';
 import StatusModal from './components/StatusModal';
 import GlobalPropagationBar from './components/GlobalPropagationBar';
+import { AIAnalysis } from './types';
+import { generateAIAnalysis } from './services/aiService';
 
-interface Spot {
+export interface Spot {
   id: string;
   spotter: string;
   freq: string;
@@ -184,6 +186,8 @@ export default function App() {
   const userContinent = useMemo(() => getContinentFromCallsign(settings.myCallsign), [settings.myCallsign]);
 
   const [isChartLoading, setIsChartLoading] = useState(false);
+  const [aiAnalyses, setAiAnalyses] = useState<{ [key: string]: AIAnalysis }>({});
+  const [analyzingSlots, setAnalyzingSlots] = useState<Set<string>>(new Set());
 
   // Load and sync settings on mount
   useEffect(() => {
@@ -206,6 +210,74 @@ export default function App() {
       }
     }
   }, []);
+
+  // Background AI Analysis Logic
+  useEffect(() => {
+    if (!settings.geminiApiKey || liveSpots.length === 0) return;
+
+    const analyzeBackground = async () => {
+      // Group spots by slot (callsign-band-mode)
+      const slots: { [key: string]: Spot[] } = {};
+      liveSpots.forEach(spot => {
+        const band = getBandFromFreq(spot.freq);
+        const key = `${spot.dxCall}-${band}-${spot.mode}`;
+        if (!slots[key]) slots[key] = [];
+        slots[key].push(spot);
+      });
+
+      for (const [key, spots] of Object.entries(slots)) {
+        const [callsign, band, mode] = key.split('-');
+        const existing = aiAnalyses[key];
+        
+        // Conditions for analysis:
+        // 1. Not already analyzing this slot
+        // 2. No existing analysis OR it's older than 15 mins OR spot count increased by 10
+        // 3. Has at least 8 spots OR has a human comment
+        const hasHumanComment = spots.some(s => !s.isSkimmer && s.comment && s.comment.length > 4);
+        const shouldAnalyze = !analyzingSlots.has(key) && (
+          !existing || 
+          (Date.now() - existing.timestamp > 900000) || 
+          (spots.length >= existing.spotCount + 10)
+        ) && (spots.length >= 8 || hasHumanComment);
+
+        if (shouldAnalyze) {
+          setAnalyzingSlots(prev => new Set(prev).add(key));
+          try {
+            const summary = await generateAIAnalysis(
+              settings.geminiApiKey,
+              callsign,
+              band,
+              mode,
+              spots,
+              userContinent
+            );
+            setAiAnalyses(prev => ({
+              ...prev,
+              [key]: {
+                summary,
+                timestamp: Date.now(),
+                spotCount: spots.length
+              }
+            }));
+          } catch (e) {
+            console.error(`Background AI analysis failed for ${key}`, e);
+          } finally {
+            setAnalyzingSlots(prev => {
+              const next = new Set(prev);
+              next.delete(key);
+              return next;
+            });
+          }
+          
+          // Small delay to avoid hitting rate limits too fast
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+    };
+
+    const timer = setTimeout(analyzeBackground, 5000); // Wait 5s after spots update
+    return () => clearTimeout(timer);
+  }, [liveSpots, settings.geminiApiKey, userContinent]);
 
   // Fetch initial DXCC chart if credentials are available
   useEffect(() => {
@@ -698,6 +770,13 @@ export default function App() {
           spots={filteredSpotsForModal}
           userContinent={userContinent}
           geminiApiKey={settings.geminiApiKey}
+          cachedAnalysis={aiAnalyses[`${selectedExpedition}-${selectedBand}-${selectedMode}`]}
+          onAnalysisUpdate={(analysis) => {
+            setAiAnalyses(prev => ({
+              ...prev,
+              [`${selectedExpedition}-${selectedBand}-${selectedMode}`]: analysis
+            }));
+          }}
         />
 
         {Object.keys(activeExpeditionsData).length === 0 && !loading && (

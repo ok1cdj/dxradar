@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Clock, Radio, User, Zap, Sparkles, Loader2, BrainCircuit } from 'lucide-react';
+import { X, Clock, Radio, User, Zap, Sparkles, Loader2, BrainCircuit, RefreshCw } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import Markdown from 'react-markdown';
+import { AIAnalysis } from '../types';
+import { generateAIAnalysis } from '../services/aiService';
 
 interface Spot {
   id: string;
@@ -26,64 +28,51 @@ interface SpotsModalProps {
   spots: Spot[];
   userContinent?: string;
   geminiApiKey?: string;
+  cachedAnalysis?: AIAnalysis;
+  onAnalysisUpdate?: (analysis: AIAnalysis) => void;
 }
 
-export default function SpotsModal({ isOpen, onClose, callsign, band, mode, spots, userContinent, geminiApiKey }: SpotsModalProps) {
-  const [aiSummary, setAiSummary] = useState<string | null>(null);
+export default function SpotsModal({ 
+  isOpen, 
+  onClose, 
+  callsign, 
+  band, 
+  mode, 
+  spots, 
+  userContinent, 
+  geminiApiKey,
+  cachedAnalysis,
+  onAnalysisUpdate
+}: SpotsModalProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const analyzeWithAI = async () => {
     if (spots.length === 0 || !geminiApiKey) return;
     setIsAnalyzing(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+      const summary = await generateAIAnalysis(
+        geminiApiKey,
+        callsign,
+        band,
+        mode,
+        spots,
+        userContinent || 'Unknown'
+      );
       
-      const spotsContext = spots.map(s => ({
-        spotter: s.spotter,
-        continent: s.spotterCont || 'Unknown',
-        freq: s.freq,
-        mode: s.mode,
-        comment: s.comment || '',
-        isSkimmer: s.isSkimmer
-      }));
-
-      const prompt = `
-        Analyze these 10 DX spots for ${callsign} on ${band} ${mode}.
-        User location: ${userContinent || 'Unknown'}.
-        
-        Spots: ${JSON.stringify(spotsContext)}
-        
-        Task: Provide a VERY CONCISE summary (max 2 short bullet points).
-        - Highlight **SPLIT** info (UP/QSX) in bold if found.
-        - Highlight **SIGNAL STRENGTH** in bold (prioritize reports from ${userContinent}).
-        - If CW, mention **WPM** in bold.
-        
-        Example format:
-        - Operating **SPLIT UP 5-10**.
-        - Strong signals in **${userContinent}** (avg 20dB).
-      `;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
-      });
-
-      setAiSummary(response.text || "Could not generate summary.");
+      if (onAnalysisUpdate) {
+        onAnalysisUpdate({
+          summary,
+          timestamp: Date.now(),
+          spotCount: spots.length
+        });
+      }
     } catch (error) {
-      console.error("AI Analysis failed:", error);
-      setAiSummary("Error: AI analysis failed. Please check your API key configuration.");
+      console.error('AI Analysis failed:', error);
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  // Reset AI summary when modal closes or spots change
-  React.useEffect(() => {
-    if (!isOpen) {
-      setAiSummary(null);
-      setIsAnalyzing(false);
-    }
-  }, [isOpen]);
   return (
     <AnimatePresence>
       {isOpen && (
@@ -126,7 +115,7 @@ export default function SpotsModal({ isOpen, onClose, callsign, band, mode, spot
             {/* AI Summary Section */}
             {spots.length > 0 && (
               <div className="px-6 py-4 bg-zinc-800/50 border-b border-white/5">
-                {!aiSummary && !isAnalyzing ? (
+                {!cachedAnalysis && !isAnalyzing ? (
                   <div className="flex items-center gap-3">
                     <button
                       onClick={analyzeWithAI}
@@ -151,7 +140,7 @@ export default function SpotsModal({ isOpen, onClose, callsign, band, mode, spot
                     <Loader2 className="w-4 h-4 animate-spin" />
                     Gemini is analyzing spots...
                   </div>
-                ) : (
+                ) : cachedAnalysis ? (
                   <motion.div 
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -161,12 +150,18 @@ export default function SpotsModal({ isOpen, onClose, callsign, band, mode, spot
                       <div className="flex items-center gap-2 text-blue-400 text-[10px] font-black uppercase tracking-widest">
                         <BrainCircuit className="w-4 h-4" />
                         AI Insight
+                        <span className="ml-2 text-[8px] text-zinc-500 font-normal normal-case tracking-normal">
+                          {new Date(cachedAnalysis.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
                       </div>
                       <button 
-                        onClick={() => setAiSummary(null)}
-                        className="text-[10px] text-zinc-500 hover:text-zinc-300 uppercase font-bold"
+                        onClick={analyzeWithAI}
+                        disabled={isAnalyzing}
+                        className="text-[10px] text-zinc-500 hover:text-blue-400 uppercase font-bold flex items-center gap-1 transition-colors"
+                        title="Refresh analysis"
                       >
-                        Clear
+                        <RefreshCw className={`w-3 h-3 ${isAnalyzing ? 'animate-spin' : ''}`} />
+                        Refresh
                       </button>
                     </div>
                     <div className="text-xs text-zinc-300 leading-relaxed max-w-none">
@@ -175,11 +170,11 @@ export default function SpotsModal({ isOpen, onClose, callsign, band, mode, spot
                         ul: ({node, ...props}) => <ul className="list-disc ml-4 space-y-1" {...props} />,
                         li: ({node, ...props}) => <li className="marker:text-blue-500/50" {...props} />
                       }}>
-                        {aiSummary}
+                        {cachedAnalysis.summary}
                       </Markdown>
                     </div>
                   </motion.div>
-                )}
+                ) : null}
               </div>
             )}
 

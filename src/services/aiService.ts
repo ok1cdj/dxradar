@@ -28,7 +28,9 @@ export async function generateAIAnalysis(
     
     Task: Provide a VERY CONCISE summary (max 2 short bullet points).
     ${isDigital ? `
-    - For FT8/FT4, identify if it is **Fox/Hound (FH)**, **SuperFox**, or **MSHV** in bold.
+    - For FT8/FT4, identify if it is **Fox/Hound (FH)**, **SuperFox**, or **MSHV** in bold. 
+    - IMPORTANT: This information can ONLY be found in the "comment" field of human spots (where "isSkimmer" is false). 
+    - DO NOT GUESS. If no human comment mentions the mode, state "Mode details not specified".
     - Signal scale for FT8/FT4: >0dB is **Extremely Strong**, -10 to 0dB is **Strong**, -18 to -11dB is **Moderate**, <-18dB is **Weak**.
     ` : `
     - Highlight **SPLIT** info (UP/QSX) in bold if found.

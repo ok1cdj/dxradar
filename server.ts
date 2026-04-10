@@ -978,12 +978,6 @@ async function startServer() {
             if (bandData[clublogMode]) {
               slotWorked = bandData[clublogMode].w > 0;
               slotConfirmed = bandData[clublogMode].c > 0;
-            } else {
-              // Check if worked on ANY mode on this band if specific mode not found
-              for (const m in bandData) {
-                if (bandData[m].w > 0) slotWorked = true;
-                if (bandData[m].c > 0) slotConfirmed = true;
-              }
             }
           }
         }

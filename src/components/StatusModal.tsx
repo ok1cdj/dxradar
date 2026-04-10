@@ -54,12 +54,6 @@ export default function StatusModal({ isOpen, onClose, callsign, status }: Statu
             if (modeData.c > 0) return 'confirmed';
             if (modeData.w > 0) return 'worked';
           }
-        } else {
-          // Flat structure (Mixed) - only use as fallback if we don't have better info
-          // but since it's Mixed, we can't be sure of the mode.
-          // However, if it's the only data we have, we'll show it.
-          if (bandData.c > 0) return 'confirmed';
-          if (bandData.w > 0) return 'worked';
         }
       }
 

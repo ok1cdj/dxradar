@@ -19,6 +19,7 @@ export async function generateAIAnalysis(
     isSkimmer: s.isSkimmer
   }));
 
+  const isDigital = mode === 'FT8' || mode === 'FT4';
   const prompt = `
     Analyze these DX spots for ${callsign} on ${band} ${mode}.
     User location: ${userContinent || 'Unknown'}.
@@ -26,17 +27,21 @@ export async function generateAIAnalysis(
     Spots: ${JSON.stringify(spotsContext)}
     
     Task: Provide a VERY CONCISE summary (max 2 short bullet points).
+    ${isDigital ? `
+    - For FT8/FT4, identify if it is **Fox/Hound (FH)**, **SuperFox**, or **MSHV** in bold.
+    ` : `
     - Highlight **SPLIT** info (UP/QSX) in bold if found.
+    `}
     - Highlight **SIGNAL STRENGTH** in bold (prioritize reports from ${userContinent}).
-    - If CW, mention **WPM** in bold.
+    ${mode === 'CW' ? '- Mention **WPM** in bold if found.' : ''}
     
     Example format:
-    - Operating **SPLIT UP 5-10**.
+    ${isDigital ? '- Operating **SuperFox** mode.' : '- Operating **SPLIT UP 5-10**.'}
     - Strong signals in **${userContinent}** (avg 20dB).
   `;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-3.1-flash-lite-preview",
     contents: prompt,
   });
 

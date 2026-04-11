@@ -182,7 +182,8 @@ export default function App() {
     manualCallsigns: '',
     hideConfirmed: false,
     onlyMyContinent: false,
-    geminiApiKey: ''
+    geminiApiKey: '',
+    disableBackgroundAI: false
   });
 
   const userContinent = useMemo(() => getContinentFromCallsign(settings.myCallsign), [settings.myCallsign]);
@@ -215,7 +216,7 @@ export default function App() {
 
   // Background AI Analysis Logic
   useEffect(() => {
-    if (!settings.geminiApiKey || liveSpots.length === 0) return;
+    if (!settings.geminiApiKey || settings.disableBackgroundAI || liveSpots.length === 0) return;
 
     const analyzeBackground = async () => {
       // Group spots by slot (callsign-band-mode)

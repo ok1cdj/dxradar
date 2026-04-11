@@ -11,6 +11,7 @@ export interface Settings {
   hideConfirmed: boolean;
   onlyMyContinent: boolean;
   geminiApiKey: string;
+  disableBackgroundAI: boolean;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -21,7 +22,8 @@ const DEFAULT_SETTINGS: Settings = {
   manualCallsigns: '',
   hideConfirmed: false,
   onlyMyContinent: false,
-  geminiApiKey: ''
+  geminiApiKey: '',
+  disableBackgroundAI: false
 };
 
 interface SettingsModalProps {
@@ -236,6 +238,30 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                 <p className="mt-1.5 text-[9px] text-zinc-500 leading-relaxed px-1">
                   Required for AI spot analysis. Your key is stored locally in your browser.
                 </p>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                <div className="flex-1 pr-4">
+                  <label htmlFor="disableBackgroundAI" className="text-sm font-medium text-zinc-300 cursor-pointer select-none block">
+                    Disable Background Analysis
+                  </label>
+                  <p className="text-[9px] text-zinc-500 mt-0.5">
+                    Saves API limits by only analyzing spots when you manually open the details window.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  id="disableBackgroundAI"
+                  onClick={() => setSettings({...settings, disableBackgroundAI: !settings.disableBackgroundAI})}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none shrink-0 ${
+                    settings.disableBackgroundAI ? 'bg-blue-500' : 'bg-zinc-700'
+                  }`}
+                >
+                  <motion.span
+                    animate={{ x: settings.disableBackgroundAI ? 18 : 2 }}
+                    className="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm"
+                  />
+                </button>
               </div>
             </div>
 

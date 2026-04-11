@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Zap, MapPin, Clock } from 'lucide-react';
+import { Zap, MapPin, Clock, AlertCircle } from 'lucide-react';
 import { Expedition } from '../types';
+import { getExpeditionUrgency } from '../utils/dateUtils';
 
 interface ActiveBandMode {
   freq: string;
@@ -33,6 +34,8 @@ export default function ExpeditionTile({ expedition, activeBands, dxccConfirmed,
   const textColor = 'text-zinc-100';
   const accentColor = 'text-zinc-500';
 
+  const urgency = getExpeditionUrgency(expedition.dates);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -42,11 +45,23 @@ export default function ExpeditionTile({ expedition, activeBands, dxccConfirmed,
       <div className="flex justify-between items-start mb-4">
         <button 
           onClick={onCallsignClick}
-          className="text-left group/callsign"
+          className="text-left group/callsign relative"
         >
-          <h3 className={`text-3xl font-black font-mono tracking-tighter ${textColor} transition-transform origin-left group-hover/callsign:scale-105 group-hover/callsign:text-emerald-500`}>
-            {expedition.callsign}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className={`text-3xl font-black font-mono tracking-tighter ${textColor} transition-transform origin-left group-hover/callsign:scale-105 group-hover/callsign:text-emerald-500`}>
+              {expedition.callsign}
+            </h3>
+            {urgency !== 'none' && (
+              <motion.div
+                animate={urgency === 'last-day' ? { opacity: [1, 0, 1] } : {}}
+                transition={urgency === 'last-day' ? { repeat: Infinity, duration: 0.8, ease: "linear" } : {}}
+                className="text-amber-500"
+                title={urgency === 'last-day' ? "Last day!" : "Last 2 days!"}
+              >
+                <AlertCircle className="w-6 h-6 fill-current bg-black rounded-full" />
+              </motion.div>
+            )}
+          </div>
           <div className={`flex items-center gap-1 text-xs font-medium uppercase tracking-wider mt-1 ${accentColor} opacity-80`}>
             <MapPin className="w-3 h-3" />
             {expedition.location}

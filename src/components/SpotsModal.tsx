@@ -179,11 +179,11 @@ export default function SpotsModal({
             )}
 
             {/* Content */}
-            <div className="flex-grow overflow-y-auto p-2 custom-scrollbar">
+            <div className="flex-grow overflow-y-auto p-2 custom-scrollbar overflow-x-auto">
               {spots.length > 0 ? (
-                <div className="space-y-1 min-w-[600px]">
+                <div className="space-y-1 min-w-[500px] sm:min-w-0">
                   {/* Header Row */}
-                  <div className="grid grid-cols-[100px_120px_1fr_80px_40px] gap-4 px-4 py-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/5">
+                  <div className="grid grid-cols-[80px_100px_1fr_70px_30px] sm:grid-cols-[100px_120px_1fr_80px_40px] gap-2 sm:gap-4 px-4 py-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/5">
                     <div>Frequency</div>
                     <div>Spotter</div>
                     <div>Comment</div>
@@ -197,7 +197,7 @@ export default function SpotsModal({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.03 }}
                       key={spot.id}
-                      className="grid grid-cols-[100px_120px_1fr_80px_40px] gap-4 px-4 py-2.5 items-center hover:bg-white/5 rounded-xl transition-colors group"
+                      className="grid grid-cols-[80px_100px_1fr_70px_30px] sm:grid-cols-[100px_120px_1fr_80px_40px] gap-2 sm:gap-4 px-4 py-2.5 items-center hover:bg-white/5 rounded-xl transition-colors group"
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-mono font-bold text-white">{spot.freq}</span>

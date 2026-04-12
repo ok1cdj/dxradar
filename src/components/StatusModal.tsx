@@ -146,21 +146,15 @@ export default function StatusModal({ isOpen, onClose, callsign, status }: Statu
             </table>
           </div>
 
-          <div className="p-3 border-t border-white/5 bg-black/20 flex items-center justify-between">
-            <div className="flex gap-3">
+          <div className="p-3 border-t border-white/5 bg-black/20 flex items-center justify-center">
+            <div className="flex gap-4">
               <div className="flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest text-emerald-500/80">
-                <CheckCircle2 className="w-2 h-2" /> CFM
+                <CheckCircle2 className="w-2.5 h-2.5" /> CFM
               </div>
               <div className="flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest text-amber-500/80">
-                <Circle className="w-2 h-2 fill-current opacity-40" /> WRK
+                <Circle className="w-2.5 h-2.5 fill-current opacity-40" /> WRK
               </div>
             </div>
-            <button 
-              onClick={onClose}
-              className="px-3 py-1 rounded-md bg-white/5 hover:bg-white/10 text-[9px] font-bold text-white transition-all uppercase tracking-widest"
-            >
-              Close
-            </button>
           </div>
         </motion.div>
       </div>

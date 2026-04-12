@@ -77,8 +77,8 @@ export default function PropagationModal({ isOpen, onClose, data }: PropagationM
               <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-500 flex items-center gap-2 px-2">
                 <Info className="w-4 h-4" /> Band Conditions & Forecast
               </h3>
-              <div className="overflow-hidden border border-white/5 rounded-2xl">
-                <table className="w-full text-left border-collapse">
+              <div className="overflow-x-auto border border-white/5 rounded-2xl custom-scrollbar">
+                <table className="w-full text-left border-collapse min-w-[500px]">
                   <thead>
                     <tr className="bg-white/5 text-[10px] uppercase font-bold tracking-wider text-zinc-500">
                       <th className="px-4 py-3">Band</th>

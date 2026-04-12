@@ -16,7 +16,8 @@ export async function generateAIAnalysis(
     freq: s.freq,
     time: s.time,
     comment: s.comment || '',
-    isSkimmer: s.isSkimmer
+    isSkimmer: s.isSkimmer,
+    continent: s.spotterCont
   }));
 
   const isDigital = mode === 'FT8' || mode === 'FT4';
@@ -30,12 +31,17 @@ export async function generateAIAnalysis(
     ${isDigital ? `
     - For FT8/FT4, identify if it is **Fox/Hound (FH)**, **SuperFox**, or **MSHV** in bold. 
     - IMPORTANT: This information can ONLY be found in the "comment" field of human spots (where "isSkimmer" is false). 
-    - DO NOT GUESS. If no human comment mentions the mode, state "Mode details not specified".
-    - Signal scale for FT8/FT4: >0dB is **Extremely Strong**, -10 to 0dB is **Strong**, -18 to -11dB is **Moderate**, <-18dB is **Weak**.
+    - DO NOT GUESS. If no human comment mentions the mode, omit this point entirely.
+    - Signal scale for FT8/FT4 (negative dB): >0dB is **Extremely Strong**, -10 to 0dB is **Strong**, -18 to -11dB is **Moderate**, <-18dB is **Weak**.
     ` : `
     - Highlight **SPLIT** info (UP/QSX) in bold if found.
-    - Signal scale for CW/SSB: S9+ is **Very Strong**, S7-S9 is **Strong**, S3-S6 is **Moderate**, S1-S2 is **Weak**.
+    - Signal scale for CW (positive dB SNR from skimmers): >30dB is **Extremely Strong**, 15-30dB is **Strong**, 5-15dB is **Moderate**, <5dB is **Weak**.
+    - Signal scale for SSB (S-reports): S9+ is **Very Strong**, S7-S9 is **Strong**, S3-S6 is **Moderate**, S1-S2 is **Weak**.
     `}
+    ${band === '6m' ? `
+    - For 6m band, be very specific about geography. List specific countries where the station is being heard based on spotter callsigns (e.g., "Heard in **Italy**, **France** and **Spain**").
+    - Look for propagation types in comments: **ES** (Sporadic E), **TEP**, **AUR**, **F2**, **MS** and mention them if found.
+    ` : ''}
     - Describe **SIGNAL STRENGTH** in bold based on reports from ${userContinent}. Avoid just "average", describe the overall trend.
     ${mode === 'CW' ? '- Mention **WPM** in bold if found.' : ''}
     

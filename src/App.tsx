@@ -153,6 +153,7 @@ const getContinentFromCallsign = (callsign: string): string => {
 
 export default function App() {
   const [expeditions, setExpeditions] = useState<Expedition[]>([]);
+  const [rawExpeditions, setRawExpeditions] = useState<Expedition[]>([]);
   const [liveSpots, setLiveSpots] = useState<Spot[]>([]);
   const [expeditionStatus, setExpeditionStatus] = useState<{ [callsign: string]: ExpeditionStatus }>({});
   const [loading, setLoading] = useState(true);
@@ -375,7 +376,26 @@ export default function App() {
     try {
       const res = await fetch('/api/expeditions');
       const data = await res.json();
-      setExpeditions(data.filter((e: Expedition) => e.status === 'Active'));
+      const now = new Date();
+      const fourteenDaysFromNow = new Date();
+      fourteenDaysFromNow.setDate(now.getDate() + 14);
+
+      // Filter for active OR upcoming within 14 days
+      const relevantExpeditions = data.filter((e: Expedition) => {
+        if (e.status === 'Active') return true;
+        if (e.status === 'Upcoming') {
+          // We need to check if it starts within 14 days
+          // The server now provides a more structured check but we'll do a basic one here too
+          // or just trust the server's 'Upcoming' status if it's already filtered there.
+          // For now, let's just take all that the server returns as 'Upcoming'
+          return true;
+        }
+        return false;
+      });
+
+      setRawExpeditions(relevantExpeditions);
+      // Main view only shows active ones with spots
+      setExpeditions(relevantExpeditions.filter((e: Expedition) => e.status === 'Active'));
     } catch (err) {
       setError('Failed to load expeditions');
     }
@@ -714,7 +734,7 @@ export default function App() {
       <ExpeditionsModal 
         isOpen={isExpeditionsModalOpen}
         onClose={() => setIsExpeditionsModalOpen(false)}
-        expeditions={allExpeditions}
+        expeditions={rawExpeditions}
       />
 
       <main className="w-full px-6 py-12 pb-32">

@@ -706,7 +706,10 @@ async function startServer() {
 
           // Determine status
           const now_date = new Date();
-          let status: 'Active' | 'Upcoming' = "Upcoming";
+          const fourteenDaysFromNow = new Date();
+          fourteenDaysFromNow.setDate(now_date.getDate() + 14);
+          let status: 'Active' | 'Upcoming' | 'Past' = "Upcoming";
+          let isWithin14Days = false;
 
           try {
             // Dates format: "Jan 22-Mar 31, 2026" or "Feb 26-Mar 20, 2026"
@@ -726,6 +729,12 @@ async function startServer() {
 
               if (now_date >= startDate && now_date <= endDate) {
                 status = "Active";
+                isWithin14Days = true;
+              } else if (startDate > now_date && startDate <= fourteenDaysFromNow) {
+                status = "Upcoming";
+                isWithin14Days = true;
+              } else if (endDate < now_date) {
+                status = "Past";
               }
             }
             
@@ -743,20 +752,29 @@ async function startServer() {
 
               if (now_date >= startDate && now_date <= endDate) {
                 status = "Active";
+                isWithin14Days = true;
+              } else if (startDate > now_date && startDate <= fourteenDaysFromNow) {
+                status = "Upcoming";
+                isWithin14Days = true;
+              } else if (endDate < now_date) {
+                status = "Past";
               }
             }
           } catch (dateErr) {
             // Ignore date parsing errors
           }
 
-          parsedExpeditions.push({
-            id: String(idCounter++),
-            callsign,
-            location,
-            dates,
-            status,
-            websiteUrl
-          });
+          // Only add if active or upcoming within 14 days
+          if (status === 'Active' || (status === 'Upcoming' && isWithin14Days)) {
+            parsedExpeditions.push({
+              id: String(idCounter++),
+              callsign,
+              location,
+              dates,
+              status: status as 'Active' | 'Upcoming',
+              websiteUrl
+            });
+          }
         } catch (e) {
           console.error("Error parsing RSS item:", e);
         }

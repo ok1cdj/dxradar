@@ -36,8 +36,9 @@ export async function generateAIAnalysis(
     ` : `
     - Highlight **SPLIT** info (UP/QSX) in bold if found.
     - Signal scale for CW (positive dB SNR from skimmers): >30dB is **Extremely Strong**, 15-30dB is **Strong**, 5-15dB is **Moderate**, <5dB is **Weak**.
-    - Signal scale for SSB (S-reports): S9+ is **Very Strong**, S7-S9 is **Strong**, S3-S6 is **Moderate**, S1-S2 is **Weak**.
+    - Signal scale for SSB: ONLY describe signal strength if explicit reports like "59", "599", "strong", "loud", "weak" are found in comments. **DO NOT GUESS or invent signal strength for SSB if not explicitly mentioned.**
     `}
+    - Mention activity status in bold if found in comments: **Big pileup**, **Busy**, **Alone/Calling CQ**, **Easy to work**, etc.
     ${band === '6m' ? `
     - For 6m band, be very specific about geography. List specific countries where the station is being heard based on spotter callsigns (e.g., "Heard in **Italy**, **France** and **Spain**").
     - Look for propagation types in comments: **ES** (Sporadic E), **TEP**, **AUR**, **F2**, **MS** and mention them if found.

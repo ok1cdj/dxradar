@@ -1,20 +1,42 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# DX Radar | Expedition Spotter
 
-# Run and deploy your AI Studio app
+Moderní webová aplikace pro radioamatéry (HAM) zaměřená na sledování aktuálních DX expedic v reálném čase. Aplikace kombinuje data z DX clusterů, ClubLogu a pokročilou analýzu pomocí AI pro maximální přehled o dění na pásmech.
 
-This contains everything you need to run your app locally.
+## 🚀 Hlavní funkce
 
-View your app in AI Studio: https://ai.studio/apps/d542c929-996e-4b5d-9808-ebcbbf2567ce
+- **Real-time DX Monitoring**: Sledování spotů z DX clusterů v reálném čase pomocí WebSocketů.
+- **AI Analýza (Gemini)**: Inteligentní analýza spotů, která detekuje:
+  - Provozní módy (Fox/Hound, SuperFox, MSHV).
+  - Sílu signálu (včetně rozlišení mezi FT8 dB a CW SNR).
+  - Stav pileupu (Big pileup, Busy, Alone).
+  - Specifické šíření na 6m (ES, TEP, AUR) a geografickou polohu.
+- **Integrace ClubLog**: Automatická kontrola stavu vašich spojení (Worked/Confirmed) pro jednotlivé expedice.
+- **Globální propagace**: Aktuální indexy SFI, Kp a stav HF pásem (WSPR Index) s předpovědí.
+- **Správa expedic**: Databáze aktuálních expedic s indikací naléhavosti (blikající ikony pro končící expedice).
+- **Personalizace**: Nastavení vlastního volacího znaku, kontinentu a filtrů pro ClubLog.
 
-## Run Locally
+## 🛠 Technologický stack
 
-**Prerequisites:**  Node.js
+- **Frontend**: React 18, Vite, TypeScript.
+- **Styling**: Tailwind CSS (Dark-first design, Glassmorphism).
+- **Animace**: Motion (motion/react).
+- **Backend**: Node.js (Express) s integrací Vite middleware.
+- **AI**: Google Gemini AI (přes `@google/genai`).
+- **Data**: WebSocket pro live spoty, REST API pro propagaci a expedice.
 
+## 📱 Podpora zařízení
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Aplikace je plně responzivní a optimalizovaná pro:
+- Desktopové prohlížeče.
+- Mobilní zařízení (iOS/iPadOS podpora včetně Apple Touch Icon).
+- Režim na výšku i na šířku.
+
+## ⚙️ Nastavení
+
+Pro plnou funkčnost aplikace doporučujeme v nastavení (ikona ozubeného kola) vyplnit:
+1. **Callsign**: Vaše volací značka pro ClubLog integraci.
+2. **ClubLog App Password**: Heslo pro aplikaci (ne vaše hlavní heslo).
+3. **Gemini API Key**: Pro aktivaci AI analýzy spotů.
+
+---
+*Vyvinuto pro radioamatérskou komunitu. 73!*

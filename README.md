@@ -1,42 +1,42 @@
 # DX Radar | Expedition Spotter
 
-Moderní webová aplikace pro radioamatéry (HAM) zaměřená na sledování aktuálních DX expedic v reálném čase. Aplikace kombinuje data z DX clusterů, ClubLogu a pokročilou analýzu pomocí AI pro maximální přehled o dění na pásmech.
+A modern web application for amateur radio (HAM) operators focused on tracking active DX expeditions in real-time. The app combines data from DX clusters, ClubLog integration, and advanced AI analysis to provide maximum situational awareness on the bands.
 
-## 🚀 Hlavní funkce
+## 🚀 Key Features
 
-- **Real-time DX Monitoring**: Sledování spotů z DX clusterů v reálném čase pomocí WebSocketů.
-- **AI Analýza (Gemini)**: Inteligentní analýza spotů, která detekuje:
-  - Provozní módy (Fox/Hound, SuperFox, MSHV).
-  - Sílu signálu (včetně rozlišení mezi FT8 dB a CW SNR).
-  - Stav pileupu (Big pileup, Busy, Alone).
-  - Specifické šíření na 6m (ES, TEP, AUR) a geografickou polohu.
-- **Integrace ClubLog**: Automatická kontrola stavu vašich spojení (Worked/Confirmed) pro jednotlivé expedice.
-- **Globální propagace**: Aktuální indexy SFI, Kp a stav HF pásem (WSPR Index) s předpovědí.
-- **Správa expedic**: Databáze aktuálních expedic s indikací naléhavosti (blikající ikony pro končící expedice).
-- **Personalizace**: Nastavení vlastního volacího znaku, kontinentu a filtrů pro ClubLog.
+- **Real-time DX Monitoring**: Live spot tracking from DX clusters using WebSockets.
+- **AI Analysis (Gemini)**: Intelligent spot analysis that detects:
+  - Operating modes (Fox/Hound, SuperFox, MSHV).
+  - Signal strength (distinguishing between FT8 dB and CW SNR scales).
+  - Pileup status (Big pileup, Busy, Alone/Calling CQ).
+  - 6m band specifics (Sporadic E, TEP, AUR, and specific geography).
+- **ClubLog Integration**: Automatic check of your QSO status (Worked/Confirmed) for each expedition.
+- **Global Propagation**: Real-time SFI, Kp indices, and HF band conditions (WSPR Index) with forecasts.
+- **Expedition Management**: Database of current expeditions with urgency indicators (pulsing icons for ending expeditions).
+- **Personalization**: Custom callsign, continent, and ClubLog filter settings.
 
-## 🛠 Technologický stack
+## 🛠 Technology Stack
 
 - **Frontend**: React 18, Vite, TypeScript.
 - **Styling**: Tailwind CSS (Dark-first design, Glassmorphism).
-- **Animace**: Motion (motion/react).
-- **Backend**: Node.js (Express) s integrací Vite middleware.
-- **AI**: Google Gemini AI (přes `@google/genai`).
-- **Data**: WebSocket pro live spoty, REST API pro propagaci a expedice.
+- **Animations**: Motion (motion/react).
+- **Backend**: Node.js (Express) with Vite middleware integration.
+- **AI**: Google Gemini AI (via `@google/genai`).
+- **Data**: WebSockets for live spots, REST APIs for propagation and expedition data.
 
-## 📱 Podpora zařízení
+## 📱 Device Support
 
-Aplikace je plně responzivní a optimalizovaná pro:
-- Desktopové prohlížeče.
-- Mobilní zařízení (iOS/iPadOS podpora včetně Apple Touch Icon).
-- Režim na výšku i na šířku.
+The application is fully responsive and optimized for:
+- Desktop browsers.
+- Mobile devices (iOS/iPadOS support including Apple Touch Icon).
+- Portrait and landscape orientations.
 
-## ⚙️ Nastavení
+## ⚙️ Setup
 
-Pro plnou funkčnost aplikace doporučujeme v nastavení (ikona ozubeného kola) vyplnit:
-1. **Callsign**: Vaše volací značka pro ClubLog integraci.
-2. **ClubLog App Password**: Heslo pro aplikaci (ne vaše hlavní heslo).
-3. **Gemini API Key**: Pro aktivaci AI analýzy spotů.
+To unlock the full potential of the app, we recommend configuring the following in Settings (gear icon):
+1. **Callsign**: Your callsign for ClubLog integration.
+2. **ClubLog App Password**: Application-specific password (not your main password).
+3. **Gemini API Key**: To enable AI-powered spot analysis.
 
 ---
-*Vyvinuto pro radioamatérskou komunitu. 73!*
+*Developed for the amateur radio community. 73!*

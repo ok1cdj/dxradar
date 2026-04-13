@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, HelpCircle, Radio, Settings, Globe, Zap, CheckCircle2, Circle, Mail, Coffee, Github, ShieldCheck, Sparkles } from 'lucide-react';
+import { X, HelpCircle, Radio, Settings, Globe, Zap, CheckCircle2, Circle, Mail, Coffee, Github, ShieldCheck, Sparkles, AlertCircle, Calendar } from 'lucide-react';
+import { APP_VERSION } from '../version';
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -99,6 +100,34 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                       <p className="text-sm text-zinc-400">The dashboard automatically shows active expeditions with live spots from the cluster.</p>
                     </div>
                   </div>
+
+                  <div className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                    <Calendar className="w-6 h-6 text-blue-400 shrink-0" />
+                    <div>
+                      <h4 className="text-white font-bold mb-1">Upcoming Expeditions</h4>
+                      <p className="text-sm text-zinc-400">The expedition list (globe icon) also shows stations starting within the next 14 days, marked with a blue "Upcoming" badge.</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="space-y-4">
+                <h3 className="text-emerald-500 font-bold uppercase tracking-wider text-xs">Status & Urgency</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3 p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl">
+                    <AlertCircle className="w-6 h-6 text-amber-500 shrink-0" />
+                    <div>
+                      <h4 className="text-white text-sm font-bold mb-1">Ending Soon</h4>
+                      <p className="text-xs text-zinc-400">An orange icon appears when an expedition is in its last 2 days. If it's the <strong>last day</strong>, the icon will blink to alert you.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
+                    <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
+                    <div>
+                      <h4 className="text-white text-sm font-bold mb-1">QSO Status</h4>
+                      <p className="text-xs text-zinc-400">Colors indicate your progress: Green for confirmed, Amber for worked, and Grey for needed slots.</p>
+                    </div>
+                  </div>
                 </div>
               </section>
 
@@ -176,7 +205,7 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
             <div className="p-6 bg-white/5 border-t border-white/5 flex items-center justify-center">
               <div className="flex items-center gap-2 text-zinc-500 text-xs font-medium uppercase tracking-widest">
                 <Radio className="w-4 h-4" />
-                <span>DX Radar v1.0</span>
+                <span>DX Radar v{APP_VERSION}</span>
               </div>
             </div>
           </motion.div>

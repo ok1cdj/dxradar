@@ -1,4 +1,4 @@
-# DX Radar | Expedition Spotter
+# DX Radar | Expedition Spotter (v1.0.0)
 
 A modern web application for amateur radio (HAM) operators focused on tracking active DX expeditions in real-time. The app combines data from DX clusters, ClubLog integration, and advanced AI analysis to provide maximum situational awareness on the bands.
 

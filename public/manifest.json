@@ -1,0 +1,22 @@
+{
+  "name": "DX Radar | Expedition Spotter",
+  "short_name": "DX Radar",
+  "description": "Real-time DX expedition tracking for radio amateurs.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

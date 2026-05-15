@@ -346,6 +346,7 @@ async function startServer() {
       try {
         console.log("Fetching NG3K RSS feed...");
         const feed = await rssParser.parseURL("http://www.ng3k.com/adxo.xml");
+        const ng3kStartCount = parsedExpeditions.length;
         
         for (const item of feed.items) {
           try {
@@ -443,6 +444,7 @@ async function startServer() {
             console.error("Error parsing RSS item:", e);
           }
         }
+        console.log(`NG3K: Parsed ${parsedExpeditions.length - ng3kStartCount} items.`);
       } catch (ng3kErr) {
         console.error("Failed to fetch NG3K:", ng3kErr);
       }
@@ -450,6 +452,7 @@ async function startServer() {
       // 2. Fetch HamRadioTimeline
       try {
         console.log("Fetching HamRadioTimeline...");
+        const timelineStartCount = parsedExpeditions.length;
         const timelineRes = await fetch("https://www.hamradiotimeline.com/timeline/dxw_timeline_1_1.php", {
            headers: {
              "User-Agent": "Mozilla/5.0 (Node.js)"
@@ -469,15 +472,19 @@ async function startServer() {
               rawTooltips = Array.from(tooltipsMatch[1].matchAll(/"((?:[^"\\]|\\.)*)"/g)).map(m => m[1]);
             }
 
-            const rows = dataMatch[1].split(/\],?\s*\[/).map(r => r.replace(/[\[\]]/g, ''));
+            const rows = Array.from(dataMatch[1].matchAll(/\[\[([\s\S]*?)\]\]/g)).map(m => m[1]);
             const currentMonthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
             const monthStr = currentMonthNames[now_date.getMonth()];
             
+            // Log for debugging
+            console.log(`Timeline: labels=${rawLabels.length}, rows=${rows.length}`);
+
             for (let i = 0; i < rawLabels.length; i++) {
               const labelCombo = rawLabels[i];
               if (!labelCombo) continue;
               
               const rowStr = rows[i] || "";
+              // match each pair: [startDay, duration, ...]
               const pairs = Array.from(rowStr.matchAll(/(\d+)\s*,\s*(\d+)/g));
               const callsigns = labelCombo.split('&').map(c => c.trim().toUpperCase());
               
@@ -533,6 +540,7 @@ async function startServer() {
               }
             }
           }
+          console.log(`Timeline: Parsed ${parsedExpeditions.length - timelineStartCount} items.`);
         } else {
            console.error(`HamRadioTimeline gave status ${timelineRes.status}`);
         }
@@ -564,9 +572,13 @@ async function startServer() {
              if (existing.source !== e.source && existing.source && !existing.source.includes('&')) {
                 existing.source = existing.source + ' & ' + e.source;
              }
-             // Prefer Timeline's link (DX-World) over NG3K if available
-             if (e.source === "Timeline" && e.websiteUrl) {
-                existing.websiteUrl = e.websiteUrl;
+             // Prefer Timeline's link (DX-World) and dates/location over NG3K if available
+             if (e.source === "Timeline") {
+               if (e.websiteUrl) existing.websiteUrl = e.websiteUrl;
+               if (e.startDate) existing.startDate = e.startDate;
+               if (e.endDate) existing.endDate = e.endDate;
+               if (e.dates) existing.dates = e.dates;
+               if (e.location && e.location !== "DX-World Timeline") existing.location = e.location;
              }
            }
         }

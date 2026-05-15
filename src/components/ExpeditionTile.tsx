@@ -109,10 +109,47 @@ export default function ExpeditionTile({ expedition, activeBands, dxccConfirmed,
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-end opacity-40">
-        <div className="text-[10px] font-mono text-zinc-500">
-          {expedition.dates}
+      <div className="mt-4 pt-4 border-t border-white/5 flex flex-col gap-3">
+        <div className="flex items-center justify-end opacity-40">
+          <div className="text-[10px] font-mono text-zinc-500">
+            {expedition.dates}
+          </div>
         </div>
+        
+        {/* Mini Gantt Chart */}
+        {expedition.startDate && expedition.endDate && (
+          <div className="flex w-full h-[3px] gap-[1px] opacity-70" title="Timeline for the current month">
+            {Array.from({ length: 31 }).map((_, i) => {
+              const d = i + 1;
+              const now = new Date();
+              const today = now.getDate();
+              const currentMonth = now.getMonth();
+              const currentYear = now.getFullYear();
+              
+              const cellDate = new Date(currentYear, currentMonth, d);
+              const cellEndDate = new Date(currentYear, currentMonth, d, 23, 59, 59);
+              const start = new Date(expedition.startDate!);
+              const end = new Date(expedition.endDate!);
+              
+              const isActive = cellEndDate >= start && cellDate <= end;
+              
+              if (!isActive) {
+                return <div key={i} className="flex-1 bg-white/5 rounded-full" />;
+              }
+              
+              if (d < today) {
+                // Passed
+                return <div key={i} className="flex-1 bg-emerald-500/20 rounded-full" />;
+              } else if (d === today) {
+                // Today
+                return <div key={i} className="flex-1 bg-emerald-400 rounded-full shadow-[0_0_4px_rgba(52,211,153,1)]" />;
+              } else {
+                // Future
+                return <div key={i} className="flex-1 bg-emerald-500/70 rounded-full" />;
+              }
+            })}
+          </div>
+        )}
       </div>
     </motion.div>
   );

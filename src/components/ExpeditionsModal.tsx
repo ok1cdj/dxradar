@@ -89,19 +89,74 @@ export default function ExpeditionsModal({ isOpen, onClose, expeditions }: Exped
                               <Calendar className="w-3.5 h-3.5 text-zinc-500" />
                               <span>{exp.dates}</span>
                             </div>
+                            {exp.source && (
+                              <div className="flex items-center gap-1.5">
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-zinc-800 text-zinc-400 border border-zinc-700">
+                                  {exp.source}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                         
-                        <a 
-                          href={`https://www.qrz.com/db/${exp.callsign}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 bg-white/5 hover:bg-emerald-500/20 text-zinc-400 hover:text-emerald-400 rounded-xl transition-all border border-white/5 hover:border-emerald-500/30"
-                          title="View on QRZ.com"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
+                        <div className="flex gap-2">
+                          {exp.websiteUrl && (
+                            <a 
+                              href={exp.websiteUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 bg-white/5 hover:bg-emerald-500/20 text-zinc-400 hover:text-emerald-400 rounded-xl transition-all border border-white/5 hover:border-emerald-500/30"
+                              title="Expedition Website"
+                            >
+                              <Globe className="w-4 h-4" />
+                            </a>
+                          )}
+                          <a 
+                            href={`https://www.qrz.com/db/${exp.callsign}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 bg-white/5 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400 rounded-xl transition-all border border-white/5 hover:border-blue-500/30"
+                            title="View on QRZ.com"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        </div>
                       </div>
+                      
+                      {/* Mini Gantt Chart */}
+                      {exp.startDate && exp.endDate && (
+                        <div className="flex w-full h-[3px] gap-[1px] mt-4 opacity-70" title="Timeline for the current month">
+                          {Array.from({ length: 31 }).map((_, i) => {
+                            const d = i + 1;
+                            const now = new Date();
+                            const today = now.getDate();
+                            const currentMonth = now.getMonth();
+                            const currentYear = now.getFullYear();
+                            
+                            const cellDate = new Date(currentYear, currentMonth, d);
+                            const cellEndDate = new Date(currentYear, currentMonth, d, 23, 59, 59);
+                            const start = new Date(exp.startDate!);
+                            const end = new Date(exp.endDate!);
+                            
+                            const isActive = cellEndDate >= start && cellDate <= end;
+                            
+                            if (!isActive) {
+                              return <div key={i} className="flex-1 bg-white/5 rounded-full" />;
+                            }
+                            
+                            if (d < today) {
+                              // Passed
+                              return <div key={i} className="flex-1 bg-emerald-500/20 rounded-full" />;
+                            } else if (d === today) {
+                              // Today
+                              return <div key={i} className="flex-1 bg-emerald-400 rounded-full shadow-[0_0_4px_rgba(52,211,153,1)]" />;
+                            } else {
+                              // Future
+                              return <div key={i} className="flex-1 bg-emerald-500/70 rounded-full" />;
+                            }
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 })
@@ -112,7 +167,7 @@ export default function ExpeditionsModal({ isOpen, onClose, expeditions }: Exped
             <div className="p-4 bg-white/5 border-t border-white/5 flex items-center justify-between text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
               <span>Total: {expeditions.length} expeditions</span>
               <span className="flex items-center gap-1">
-                Data from <span className="text-zinc-400">NG3K ADXO</span>
+                Data from <span className="text-zinc-400">NG3K & Timeline</span>
               </span>
             </div>
           </motion.div>

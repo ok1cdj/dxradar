@@ -3,8 +3,11 @@ export interface Expedition {
   callsign: string;
   location: string;
   dates: string;
+  startDate?: string;
+  endDate?: string;
   status: 'Active' | 'Upcoming';
   websiteUrl?: string;
+  source?: string;
 }
 
 export interface AIAnalysis {

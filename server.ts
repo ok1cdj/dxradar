@@ -211,7 +211,7 @@ async function startServer() {
       console.log("Fetching propagation data...");
       const response = await fetch("https://wspr.hb9vqq.ch/api/dx.json", {
         headers: {
-          'User-Agent': 'DX-Radar-App/1.0'
+          'User-Agent': 'DX-Radar-App/1.1'
         }
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -334,68 +334,262 @@ async function startServer() {
 
   async function updateActiveCallsigns() {
     try {
-      console.log("Updating active callsigns list...");
-      const feed = await rssParser.parseURL("http://www.ng3k.com/adxo.xml");
-      const calls: string[] = [];
+      console.log("Updating active callsigns and expeditions list...");
       const now_date = new Date();
+      const fourteenDaysFromNow = new Date();
+      fourteenDaysFromNow.setDate(now_date.getDate() + 14);
+      const parsedExpeditions: any[] = [];
+      const calls: Set<string> = new Set();
+      let idCounter = 1;
 
-      for (const item of feed.items) {
-        const title = item.title || "";
-        const parts = title.split(':');
-        if (parts.length < 2) continue;
-
-        const rest = parts[1].trim();
-        const subParts = rest.split('--').map(p => p.trim());
-        let callsign = subParts[1] || "";
+      // 1. Fetch NG3K RSS
+      try {
+        console.log("Fetching NG3K RSS feed...");
+        const feed = await rssParser.parseURL("http://www.ng3k.com/adxo.xml");
         
-        if (!callsign) continue;
+        for (const item of feed.items) {
+          try {
+            const title = item.title || "";
+            const description = item.content || item.contentSnippet || "";
+            const parts = title.split(':');
+            if (parts.length < 2) continue;
 
-        // Basic date check to see if it's active
-        let isActive = false;
-        const dates = subParts[0] || "";
-        const yearMatch = dates.match(/(\d{4})/);
-        const year = yearMatch ? parseInt(yearMatch[1]) : now_date.getFullYear();
-        
-        const singleMonthRange = dates.match(/([A-Z][a-z]{2})\s+(\d+)-(\d+)/i);
-        if (singleMonthRange) {
-          const monthStr = singleMonthRange[1];
-          const startDay = parseInt(singleMonthRange[2]);
-          const endDay = parseInt(singleMonthRange[3]);
-          const startDate = new Date(`${monthStr} ${startDay}, ${year}`);
-          const endDate = new Date(`${monthStr} ${endDay}, ${year}`);
-          endDate.setHours(23, 59, 59);
-          if (now_date >= startDate && now_date <= endDate) isActive = true;
-        }
-        
-        const multiMonthRange = dates.match(/([A-Z][a-z]{2})\s+(\d+)-([A-Z][a-z]{2})\s+(\d+)/i);
-        if (multiMonthRange) {
-          const startMonth = multiMonthRange[1];
-          const startDay = parseInt(multiMonthRange[2]);
-          const endMonth = multiMonthRange[3];
-          const endDay = parseInt(multiMonthRange[4]);
-          const startDate = new Date(`${startMonth} ${startDay}, ${year}`);
-          const endDate = new Date(`${endMonth} ${endDay}, ${year}`);
-          endDate.setHours(23, 59, 59);
-          if (now_date >= startDate && now_date <= endDate) isActive = true;
-        }
+            const location = parts[0].trim();
+            const rest = parts[1].trim();
+            const subParts = rest.split('--').map(p => p.trim());
+            
+            let dates = subParts[0] || "Unknown Dates";
+            let callsign = subParts[1] || "";
+            if (!callsign) continue;
 
-        if (isActive) {
-          calls.push(callsign.toUpperCase());
+            if (callsign.length < 4 || callsign.includes('/')) {
+              const asMatch = description.match(/ as\s+([A-Z0-9\/]+)/i);
+              if (asMatch) {
+                callsign = asMatch[1].trim();
+              }
+            }
+
+            const websiteUrl = item.link;
+            let status: 'Active' | 'Upcoming' | 'Past' = "Upcoming";
+            let isWithin14Days = false;
+            let parsedStartDate: string | undefined;
+            let parsedEndDate: string | undefined;
+
+            try {
+              const yearMatch = dates.match(/(\d{4})/);
+              const year = yearMatch ? parseInt(yearMatch[1]) : now_date.getFullYear();
+              
+              const singleMonthRange = dates.match(/([A-Z][a-z]{2})\s+(\d+)-(\d+)/i);
+              const multiMonthRange = dates.match(/([A-Z][a-z]{2})\s+(\d+)-([A-Z][a-z]{2})\s+(\d+)/i);
+              
+              if (singleMonthRange) {
+                const monthStr = singleMonthRange[1];
+                const startDay = parseInt(singleMonthRange[2]);
+                const endDay = parseInt(singleMonthRange[3]);
+                const startDate = new Date(`${monthStr} ${startDay}, ${year}`);
+                const endDate = new Date(`${monthStr} ${endDay}, ${year}`);
+                endDate.setHours(23, 59, 59);
+                parsedStartDate = startDate.toISOString();
+                parsedEndDate = endDate.toISOString();
+
+                if (now_date >= startDate && now_date <= endDate) {
+                  status = "Active";
+                  isWithin14Days = true;
+                } else if (startDate > now_date && startDate <= fourteenDaysFromNow) {
+                  status = "Upcoming";
+                  isWithin14Days = true;
+                } else if (endDate < now_date) {
+                  status = "Past";
+                }
+              } else if (multiMonthRange) {
+                const startMonth = multiMonthRange[1];
+                const startDay = parseInt(multiMonthRange[2]);
+                const endMonth = multiMonthRange[3];
+                const endDay = parseInt(multiMonthRange[4]);
+                const startDate = new Date(`${startMonth} ${startDay}, ${year}`);
+                const endDate = new Date(`${endMonth} ${endDay}, ${year}`);
+                endDate.setHours(23, 59, 59);
+                parsedStartDate = startDate.toISOString();
+                parsedEndDate = endDate.toISOString();
+
+                if (now_date >= startDate && now_date <= endDate) {
+                  status = "Active";
+                  isWithin14Days = true;
+                } else if (startDate > now_date && startDate <= fourteenDaysFromNow) {
+                  status = "Upcoming";
+                  isWithin14Days = true;
+                } else if (endDate < now_date) {
+                  status = "Past";
+                }
+              }
+            } catch (dateErr) {
+              // Ignore date parsing errors
+            }
+
+            if (status === 'Active' || (status === 'Upcoming' && isWithin14Days)) {
+              parsedExpeditions.push({
+                id: String(idCounter++),
+                callsign,
+                location,
+                dates,
+                status: status as 'Active' | 'Upcoming',
+                websiteUrl,
+                source: 'NG3K ADXO',
+                startDate: parsedStartDate,
+                endDate: parsedEndDate
+              });
+            }
+          } catch (e) {
+            console.error("Error parsing RSS item:", e);
+          }
         }
+      } catch (ng3kErr) {
+        console.error("Failed to fetch NG3K:", ng3kErr);
       }
 
-      // Add manual callsigns
+      // 2. Fetch HamRadioTimeline
+      try {
+        console.log("Fetching HamRadioTimeline...");
+        const timelineRes = await fetch("https://www.hamradiotimeline.com/timeline/dxw_timeline_1_1.php", {
+           headers: {
+             "User-Agent": "Mozilla/5.0 (Node.js)"
+           }
+        });
+        if (timelineRes.ok) {
+          const html = await timelineRes.text();
+          const labelsMatch = html.match(/var\s+labels\s*=\s*\[(.*?)\];/);
+          const dataMatch = html.match(/data\s*=\s*\[([\s\S]*?)\];/);
+          const tooltipsMatch = html.match(/\.set\('tooltips',\s*\[([\s\S]*?)\]\)/);
+
+          if (labelsMatch && dataMatch) {
+            const rawLabels = labelsMatch[1].split(',').map(l => l.replace(/['"]/g, '').trim());
+            
+            let rawTooltips: string[] = [];
+            if (tooltipsMatch) {
+              rawTooltips = Array.from(tooltipsMatch[1].matchAll(/"((?:[^"\\]|\\.)*)"/g)).map(m => m[1]);
+            }
+
+            const rows = dataMatch[1].split(/\],?\s*\[/).map(r => r.replace(/[\[\]]/g, ''));
+            const currentMonthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const monthStr = currentMonthNames[now_date.getMonth()];
+            
+            for (let i = 0; i < rawLabels.length; i++) {
+              const labelCombo = rawLabels[i];
+              if (!labelCombo) continue;
+              
+              const rowStr = rows[i] || "";
+              const pairs = Array.from(rowStr.matchAll(/(\d+)\s*,\s*(\d+)/g));
+              const callsigns = labelCombo.split('&').map(c => c.trim().toUpperCase());
+              
+              let location = "DX-World Timeline";
+              let websiteUrl = "https://www.dx-world.net/";
+              const tt = rawTooltips[i] || "";
+              const locMatch = tt.match(/<b>(.*?)<\/b>/i);
+              if (locMatch && locMatch[1]) location = locMatch[1].trim();
+              
+              // Extract href safely from escaped string
+              // e.g. <a href=\"https://www.dx-world.net/...\" target=\"_blank\">
+              const urlMatch = tt.match(/href=\\?["'](.*?)\\?["']/i);
+              if (urlMatch && urlMatch[1]) websiteUrl = urlMatch[1].trim();
+
+              for (const call of callsigns) {
+                if (!call) continue;
+                
+                for (const pair of pairs) {
+                  const startDay = parseInt(pair[1]);
+                  const duration = parseInt(pair[2]);
+                  
+                  const startDate = new Date(now_date.getFullYear(), now_date.getMonth(), startDay);
+                  const endDate = new Date(now_date.getFullYear(), now_date.getMonth(), startDay + duration - 1);
+                  endDate.setHours(23, 59, 59);
+                  
+                  let status: 'Active' | 'Upcoming' | 'Past' = "Upcoming";
+                  let isWithin14Days = false;
+                  
+                  if (now_date >= startDate && now_date <= endDate) {
+                    status = "Active";
+                    isWithin14Days = true;
+                  } else if (startDate > now_date && startDate <= fourteenDaysFromNow) {
+                    status = "Upcoming";
+                    isWithin14Days = true;
+                  } else if (endDate < now_date) {
+                     status = "Past";
+                  }
+                  
+                  if (status === 'Active' || (status === 'Upcoming' && isWithin14Days)) {
+                    parsedExpeditions.push({
+                      id: String(idCounter++),
+                      callsign: call,
+                      location: location,
+                      dates: `${monthStr} ${startDay}-${startDay + duration - 1}, ${startDate.getFullYear()}`,
+                      status: status as 'Active' | 'Upcoming',
+                      websiteUrl,
+                      source: "Timeline",
+                      startDate: startDate.toISOString(),
+                      endDate: endDate.toISOString(),
+                    });
+                  }
+                }
+              }
+            }
+          }
+        } else {
+           console.error(`HamRadioTimeline gave status ${timelineRes.status}`);
+        }
+      } catch (timelineErr) {
+        console.error("Failed to fetch HamRadioTimeline:", timelineErr);
+      }
+
+      // 3. Add manual callsigns
       if (currentSettings.manualCallsigns) {
-        const manual = currentSettings.manualCallsigns.split(",").map(c => c.trim().toUpperCase()).filter(c => c.length > 0);
-        calls.push(...manual);
+        const manual = currentSettings.manualCallsigns.split(",")
+          .map(c => c.trim().toUpperCase())
+          .filter(c => c.length > 0);
+        for (const m of manual) {
+          calls.add(m);
+        }
       }
 
-      activeCallsigns = Array.from(new Set(calls));
-      console.log(`Found ${activeCallsigns.length} active expedition callsigns.`);
+      // Merge and deduplicate parsedExpeditions (prefer tracking all, but unify tags)
+      const uniqueExpeditions = [];
+      const seen = new Set();
+      for (const e of parsedExpeditions) {
+        if (!seen.has(e.callsign)) {
+          seen.add(e.callsign);
+          uniqueExpeditions.push(e);
+        } else {
+           // update source to indicate both if needed
+           const existing = uniqueExpeditions.find(ex => ex.callsign === e.callsign);
+           if (existing) {
+             if (existing.source !== e.source && existing.source && !existing.source.includes('&')) {
+                existing.source = existing.source + ' & ' + e.source;
+             }
+             // Prefer Timeline's link (DX-World) over NG3K if available
+             if (e.source === "Timeline" && e.websiteUrl) {
+                existing.websiteUrl = e.websiteUrl;
+             }
+           }
+        }
+        if (e.status === 'Active') {
+          calls.add(e.callsign);
+        }
+      }
+
+      // Sort expeditions: Upcoming correctly by date start
+      uniqueExpeditions.sort((a, b) => {
+         // rough sort
+         if (a.status !== b.status) return a.status === 'Active' ? -1 : 1;
+         return a.callsign.localeCompare(b.callsign);
+      });
+
+      expeditionsCache = uniqueExpeditions;
+      lastFetchTime = Date.now();
+      
+      activeCallsigns = Array.from(calls);
+      console.log(`Updated expeditions cache: ${expeditionsCache.length} found. Active callsigns for validation: ${activeCallsigns.length}`);
       broadcastLog(`Found ${activeCallsigns.length} active expedition callsigns.`);
-      console.log(`Updated active callsigns: ${activeCallsigns.length} found.`);
     } catch (err) {
-      console.error("Failed to update active callsigns:", err);
+      console.error("Error heavily updating active callsigns:", err);
     }
   }
 
@@ -658,138 +852,16 @@ async function startServer() {
   });
 
   app.get("/api/expeditions", async (req, res) => {
-    const now = Date.now();
-    
-    if (expeditionsCache.length > 0 && (now - lastFetchTime < CACHE_DURATION)) {
-      return res.json(expeditionsCache);
+    // Return from cache, populated by updateActiveCallsigns
+    if (expeditionsCache.length === 0) {
+      // Force initial fetch if somehow empty
+      await updateActiveCallsigns();
     }
-
-    try {
-      console.log("Fetching NG3K RSS feed...");
-      const feed = await rssParser.parseURL("http://www.ng3k.com/adxo.xml");
-      
-      const parsedExpeditions: any[] = [];
-      let idCounter = 1;
-
-      for (const item of feed.items) {
-        try {
-          const title = item.title || "";
-          const description = item.content || item.contentSnippet || "";
-          
-          // Title format: "Location: Dates -- Callsign -- QSL via: ..."
-          // Example: "Curacao: Jan 22-Mar 31, 2026 -- PJ2 -- QSL via: LoTW"
-          const parts = title.split(':');
-          if (parts.length < 2) continue;
-
-          const location = parts[0].trim();
-          const rest = parts[1].trim();
-          const subParts = rest.split('--').map(p => p.trim());
-          
-          let dates = subParts[0] || "Unknown Dates";
-          let callsign = subParts[1] || "";
-
-          if (!callsign) continue;
-
-          // Handle short callsigns using description
-          // Example: "By UR9IDX as FH/UR9IDX"
-          if (callsign.length < 4 || callsign.includes('/')) {
-            const asMatch = description.match(/ as\s+([A-Z0-9\/]+)/i);
-            if (asMatch) {
-              callsign = asMatch[1].trim();
-            }
-          }
-
-          // If it's still just a prefix (like PJ2), try to find a better one or keep it
-          // But usually 'as' handles it.
-
-          const websiteUrl = item.link;
-
-          // Determine status
-          const now_date = new Date();
-          const fourteenDaysFromNow = new Date();
-          fourteenDaysFromNow.setDate(now_date.getDate() + 14);
-          let status: 'Active' | 'Upcoming' | 'Past' = "Upcoming";
-          let isWithin14Days = false;
-
-          try {
-            // Dates format: "Jan 22-Mar 31, 2026" or "Feb 26-Mar 20, 2026"
-            const yearMatch = dates.match(/(\d{4})/);
-            const year = yearMatch ? parseInt(yearMatch[1]) : now_date.getFullYear();
-            
-            // Handle format: "Mar 3-20, 2026"
-            const singleMonthRange = dates.match(/([A-Z][a-z]{2})\s+(\d+)-(\d+)/i);
-            if (singleMonthRange) {
-              const monthStr = singleMonthRange[1];
-              const startDay = parseInt(singleMonthRange[2]);
-              const endDay = parseInt(singleMonthRange[3]);
-              
-              const startDate = new Date(`${monthStr} ${startDay}, ${year}`);
-              const endDate = new Date(`${monthStr} ${endDay}, ${year}`);
-              endDate.setHours(23, 59, 59);
-
-              if (now_date >= startDate && now_date <= endDate) {
-                status = "Active";
-                isWithin14Days = true;
-              } else if (startDate > now_date && startDate <= fourteenDaysFromNow) {
-                status = "Upcoming";
-                isWithin14Days = true;
-              } else if (endDate < now_date) {
-                status = "Past";
-              }
-            }
-            
-            // Handle format: "Feb 26-Mar 20, 2026"
-            const multiMonthRange = dates.match(/([A-Z][a-z]{2})\s+(\d+)-([A-Z][a-z]{2})\s+(\d+)/i);
-            if (multiMonthRange) {
-              const startMonth = multiMonthRange[1];
-              const startDay = parseInt(multiMonthRange[2]);
-              const endMonth = multiMonthRange[3];
-              const endDay = parseInt(multiMonthRange[4]);
-              
-              const startDate = new Date(`${startMonth} ${startDay}, ${year}`);
-              const endDate = new Date(`${endMonth} ${endDay}, ${year}`);
-              endDate.setHours(23, 59, 59);
-
-              if (now_date >= startDate && now_date <= endDate) {
-                status = "Active";
-                isWithin14Days = true;
-              } else if (startDate > now_date && startDate <= fourteenDaysFromNow) {
-                status = "Upcoming";
-                isWithin14Days = true;
-              } else if (endDate < now_date) {
-                status = "Past";
-              }
-            }
-          } catch (dateErr) {
-            // Ignore date parsing errors
-          }
-
-          // Only add if active or upcoming within 14 days
-          if (status === 'Active' || (status === 'Upcoming' && isWithin14Days)) {
-            parsedExpeditions.push({
-              id: String(idCounter++),
-              callsign,
-              location,
-              dates,
-              status: status as 'Active' | 'Upcoming',
-              websiteUrl
-            });
-          }
-        } catch (e) {
-          console.error("Error parsing RSS item:", e);
-        }
-      }
-
-      if (parsedExpeditions.length > 0) {
-        expeditionsCache = parsedExpeditions;
-        lastFetchTime = now;
-        res.json(parsedExpeditions);
-      } else {
-        throw new Error("No expeditions found in RSS feed");
-      }
-    } catch (error) {
-      console.error("Failed to fetch NG3K RSS:", error);
-      res.status(500).json({ error: "Failed to fetch expeditions" });
+    
+    if (expeditionsCache.length > 0) {
+      res.json(expeditionsCache);
+    } else {
+      res.status(500).json({ error: "No expeditions found from any source" });
     }
   });
 

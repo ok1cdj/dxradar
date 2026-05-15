@@ -1,4 +1,4 @@
-# DX Radar | Expedition Spotter (v1.0.0)
+# DX Radar | Expedition Spotter (v1.1.0)
 
 A modern web application for amateur radio (HAM) operators focused on tracking active DX expeditions in real-time. The app combines data from DX clusters, ClubLog integration, and advanced AI analysis to provide maximum situational awareness on the bands.
 
@@ -12,7 +12,7 @@ A modern web application for amateur radio (HAM) operators focused on tracking a
   - 6m band specifics (Sporadic E, TEP, AUR, and specific geography).
 - **ClubLog Integration**: Automatic check of your QSO status (Worked/Confirmed) for each expedition.
 - **Global Propagation**: Real-time SFI, Kp indices, and HF band conditions (WSPR Index) with forecasts.
-- **Expedition Management**: Database of current expeditions with urgency indicators (pulsing icons for ending expeditions).
+- **Expedition Management**: Database of current expeditions aggregated from NG3K ADXO and HamRadioTimeline.com (by IK8LOV Max Laconca, edited by MM0NDX), featuring visual timeline Gantt charts.
 - **Personalization**: Custom callsign, continent, and ClubLog filter settings.
 
 ## 🛠 Technology Stack
@@ -37,6 +37,12 @@ To unlock the full potential of the app, we recommend configuring the following 
 1. **Callsign**: Your callsign for ClubLog integration.
 2. **ClubLog App Password**: Application-specific password (not your main password).
 3. **Gemini API Key**: To enable AI-powered spot analysis.
+
+## 🤝 Data Sources & Credits
+
+Expedition schedules are aggregated from two excellent community resources:
+- **NG3K Amateur Radio Exigencies**: The classic and highly reliable ADXO bulletin.
+- **HamRadioTimeline.com**: Designed by IK8LOV (Max Laconca) and Edited by MM0NDX (DX-World).
 
 ---
 *Developed for the amateur radio community. 73!*

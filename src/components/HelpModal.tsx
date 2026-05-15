@@ -48,6 +48,23 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                 </p>
               </section>
 
+              <section className="space-y-3">
+                <h3 className="text-emerald-500 font-bold uppercase tracking-wider text-xs">Data Sources & Credits</h3>
+                <p className="text-zinc-300 text-sm leading-relaxed">
+                  Expedition schedules are aggregated from two excellent community resources:
+                </p>
+                <ul className="space-y-2 text-sm text-zinc-400">
+                  <li className="flex items-start gap-2">
+                    <Globe className="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" />
+                    <span><a href="http://www.ng3k.com/adxo.xml" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">NG3K Amateur Radio Exigencies</a> - The classic and highly reliable ADXO bulletin.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Globe className="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" />
+                    <span><a href="https://www.dx-world.net/" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">HamRadioTimeline.com</a> - Designed by IK8LOV (Max Laconca) and Edited by MM0NDX (DX-World).</span>
+                  </li>
+                </ul>
+              </section>
+
               <section className="space-y-4">
                 <h3 className="text-emerald-500 font-bold uppercase tracking-wider text-xs">Privacy & Security</h3>
                 <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl space-y-3">

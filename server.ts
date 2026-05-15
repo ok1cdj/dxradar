@@ -6,6 +6,7 @@ import Parser from "rss-parser";
 import net from "net";
 import { WebSocketServer, WebSocket } from "ws";
 import http from "http";
+import { execSync } from "child_process";
 import "dotenv/config";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -453,22 +454,36 @@ async function startServer() {
       try {
         console.log("Fetching HamRadioTimeline...");
         const timelineStartCount = parsedExpeditions.length;
-        const timelineRes = await fetch("https://www.hamradiotimeline.com/timeline/dxw_timeline_1_1.php", {
-           headers: {
-             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-             "Referer": "https://www.dx-world.net/",
-             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-             "Accept-Language": "en-US,en;q=0.5",
-             "Connection": "keep-alive",
-             "Upgrade-Insecure-Requests": "1",
-             "Sec-Fetch-Dest": "document",
-             "Sec-Fetch-Mode": "navigate",
-             "Sec-Fetch-Site": "cross-site",
-             "Sec-Fetch-User": "?1"
-           }
-        });
-        if (timelineRes.ok) {
-          const html = await timelineRes.text();
+        
+        let html = "";
+        try {
+          // Use curl as a fallback because node-fetch gets 403 Forbidden on some hosting environments (Cloudflare/WAF)
+          const curlCommand = `curl -s "https://www.hamradiotimeline.com/timeline/dxw_timeline_1_1.php" ` +
+            `-H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" ` +
+            `-H "Referer: https://www.dx-world.net/" ` +
+            `-H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"`;
+          
+          html = execSync(curlCommand, { encoding: 'utf8', timeout: 10000 });
+        } catch (curlError) {
+          console.error("Curl fetch failed, trying node-fetch as fallback:", curlError);
+          const timelineRes = await fetch("https://www.hamradiotimeline.com/timeline/dxw_timeline_1_1.php", {
+             headers: {
+               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+               "Referer": "https://www.dx-world.net/",
+               "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+               "Accept-Language": "en-US,en;q=0.5",
+               "Connection": "keep-alive",
+               "Upgrade-Insecure-Requests": "1"
+             }
+          });
+          if (timelineRes.ok) {
+            html = await timelineRes.text();
+          } else {
+             console.error(`HamRadioTimeline node-fetch also failed with status ${timelineRes.status}`);
+          }
+        }
+
+        if (html) {
           const labelsMatch = html.match(/var\s+labels\s*=\s*\[(.*?)\];/);
           const dataMatch = html.match(/data\s*=\s*\[([\s\S]*?)\];/);
           const tooltipsMatch = html.match(/\.set\('tooltips',\s*\[([\s\S]*?)\]\)/);

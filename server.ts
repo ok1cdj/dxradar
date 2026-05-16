@@ -566,7 +566,7 @@ async function startServer() {
           }
           console.log(`Timeline: Parsed ${parsedExpeditions.length - timelineStartCount} items.`);
         } else {
-           console.error(`HamRadioTimeline gave status ${timelineRes.status}`);
+           console.error(`HamRadioTimeline fetch failed (empty HTML response)`);
         }
       } catch (timelineErr) {
         console.error("Failed to fetch HamRadioTimeline:", timelineErr);
@@ -596,13 +596,19 @@ async function startServer() {
              if (existing.source !== e.source && existing.source && !existing.source.includes('&')) {
                 existing.source = existing.source + ' & ' + e.source;
              }
-             // Prefer Timeline's link (DX-World) and dates/location over NG3K if available
+             // Priority: Timeline (HamRadioTimeline) > NG3K
              if (e.source === "Timeline") {
+               // If the new item is from Timeline, it always wins
                if (e.websiteUrl) existing.websiteUrl = e.websiteUrl;
                if (e.startDate) existing.startDate = e.startDate;
                if (e.endDate) existing.endDate = e.endDate;
                if (e.dates) existing.dates = e.dates;
                if (e.location && e.location !== "DX-World Timeline") existing.location = e.location;
+             } else if (existing.source.includes("Timeline")) {
+               // If existing item already has Timeline data, DON'T let NG3K overwrite websiteUrl or dates
+               if (existing.location === "DX-World Timeline" && e.location) {
+                 existing.location = e.location;
+               }
              }
            }
         }

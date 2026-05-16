@@ -167,7 +167,7 @@ export default function ExpeditionsModal({ isOpen, onClose, expeditions }: Exped
             <div className="p-4 bg-white/5 border-t border-white/5 flex items-center justify-between text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
               <span>Total: {expeditions.length} expeditions</span>
               <span className="flex items-center gap-1">
-                Data from <span className="text-zinc-400">NG3K & Timeline</span>
+                Data from <span className="text-zinc-400">NG3K & DXWorld</span>
               </span>
             </div>
           </motion.div>

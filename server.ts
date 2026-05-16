@@ -98,6 +98,25 @@ function getBandFromFreq(freqKhz: number): string {
 async function startServer() {
   const app = express();
   const server = http.createServer(app);
+
+  // Použití bezpečnostních hlaviček, zejména Content-Security-Policy
+  // pro ochranu citlivých uživatelských dat (API klíče) v localStorage
+  app.use((req, res, next) => {
+    res.setHeader(
+      "Content-Security-Policy",
+      "default-src 'self'; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://stats.ok1cdj.com; " +
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+      "connect-src 'self' ws: wss: https://stats.ok1cdj.com https://generativelanguage.googleapis.com; " +
+      "img-src 'self' data: blob: https:; " +
+      "font-src 'self' data: https://fonts.gstatic.com;"
+    );
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-XSS-Protection", "1; mode=block");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    next();
+  });
+
   // Prefix to Continent mapping (simplified)
   const PREFIX_TO_CONTINENT: { [key: string]: string } = {
     '1A': 'EU', '1S': 'AS', '3A': 'EU', '3B': 'AF', '3C': 'AF', '3D': 'AF', '3V': 'AF', '3W': 'AS', '3X': 'AF', '3Y': 'AN',

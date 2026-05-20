@@ -14,6 +14,7 @@ A modern web application for amateur radio (HAM) operators focused on tracking a
 - **Global Propagation**: Real-time SFI, Kp indices, and HF band conditions (WSPR Index) with forecasts.
 - **Expedition Management**: Database of current expeditions aggregated from NG3K ADXO and HamRadioTimeline.com (by IK8LOV Max Laconca, edited by MM0NDX), featuring visual timeline Gantt charts.
 - **Personalization**: Custom callsign, continent, and ClubLog filter settings.
+- **Secure Export & Import**: Securely backup and restore your settings across devices using AES-encrypted files with a custom password.
 
 ## 🛠 Technology Stack
 

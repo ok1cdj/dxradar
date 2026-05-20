@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { X, Save, Server, Radio, Key, Globe, CheckCircle2, AlertCircle, Loader2, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Save, Server, Radio, Key, Globe, CheckCircle2, AlertCircle, Loader2, Sparkles, Download, Upload, FileKey } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import AES from 'crypto-js/aes';
+import encUtf8 from 'crypto-js/enc-utf8';
 
 export interface Settings {
   clublogEmail: string;
@@ -39,6 +41,11 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
   const [testCallsign, setTestCallsign] = useState('');
   const [testResult, setTestResult] = useState<any>(null);
   const [isTestingCallsign, setIsTestingCallsign] = useState(false);
+
+  const [cryptoPassword, setCryptoPassword] = useState('');
+  const [cryptoStatus, setCryptoStatus] = useState<'' | 'success' | 'error'>('');
+  const [cryptoMessage, setCryptoMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('dx_expedition_settings');
@@ -120,6 +127,56 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
     } finally {
       setIsTestingCallsign(false);
     }
+  };
+
+  const handleExport = () => {
+    if (!cryptoPassword) {
+      setCryptoStatus('error');
+      setCryptoMessage('Password is required for export');
+      return;
+    }
+    try {
+      const encrypted = AES.encrypt(JSON.stringify(settings), cryptoPassword).toString();
+      const blob = new Blob([encrypted], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'dxradar-settings.enc';
+      a.click();
+      URL.revokeObjectURL(url);
+      setCryptoStatus('success');
+      setCryptoMessage('Settings exported successfully');
+    } catch (e) {
+      setCryptoStatus('error');
+      setCryptoMessage('Failed to export settings');
+    }
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!cryptoPassword) {
+      setCryptoStatus('error');
+      setCryptoMessage('Password is required for import');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const encrypted = event.target?.result as string;
+        const decrypted = AES.decrypt(encrypted, cryptoPassword).toString(encUtf8);
+        if (!decrypted) throw new Error('Decryption empty');
+        const parsed = JSON.parse(decrypted);
+        setSettings({ ...DEFAULT_SETTINGS, ...parsed });
+        setCryptoStatus('success');
+        setCryptoMessage('Settings imported successfully. Please Save.');
+      } catch (err) {
+        setCryptoStatus('error');
+        setCryptoMessage('Incorrect password or invalid file');
+      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+    reader.readAsText(file);
   };
 
   if (!isOpen) return null;
@@ -359,6 +416,62 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                 </div>
               </div>
             </div>
+
+            {/* Export & Import Settings */}
+            <div className="space-y-4 pt-2 border-t border-white/5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                  <FileKey className="w-3 h-3 text-emerald-500" /> Export & Import
+                </h3>
+              </div>
+              <div>
+                <p className="text-[10px] text-zinc-400 mb-2 leading-relaxed">
+                  Backup your settings to a secure file, or restore them on another device. The file is AES encrypted with the password you provide below.
+                </p>
+                <div className="relative mb-3">
+                  <input 
+                    type="password" 
+                    value={cryptoPassword}
+                    onChange={e => {
+                      setCryptoPassword(e.target.value);
+                      setCryptoStatus('');
+                    }}
+                    placeholder="Enter encryption password"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 pl-10 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  />
+                  <Key className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                </div>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleExport}
+                    className="flex-1 py-2 px-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all text-zinc-300"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Export
+                  </button>
+                  <label className="flex-1 py-2 px-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all text-zinc-300 cursor-pointer">
+                    <Upload className="w-3.5 h-3.5" />
+                    Import
+                    <input 
+                      type="file" 
+                      accept=".enc" 
+                      className="hidden" 
+                      onChange={handleImport}
+                      ref={fileInputRef}
+                    />
+                  </label>
+                </div>
+                {cryptoStatus && (
+                  <p className={`mt-2 text-[10px] text-center ${
+                    cryptoStatus === 'success' ? 'text-emerald-500/70' : 'text-rose-500/70'
+                  }`}>
+                    {cryptoMessage}
+                  </p>
+                )}
+              </div>
+            </div>
+
           </div>
 
           <div className="p-6 border-t border-white/5 bg-white/5 flex gap-3">

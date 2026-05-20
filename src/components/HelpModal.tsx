@@ -125,6 +125,14 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                       <p className="text-sm text-zinc-400">The expedition list (globe icon) also shows stations starting within the next 14 days, marked with a blue "Upcoming" badge.</p>
                     </div>
                   </div>
+
+                  <div className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                    <ShieldCheck className="w-6 h-6 text-emerald-400 shrink-0" />
+                    <div>
+                      <h4 className="text-white font-bold mb-1">Export & Import Settings</h4>
+                      <p className="text-sm text-zinc-400">Securely backup and restore your settings across devices. Your export file is encrypted with AES using a password you provide.</p>
+                    </div>
+                  </div>
                 </div>
               </section>
 

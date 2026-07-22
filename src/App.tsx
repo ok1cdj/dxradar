@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Radio, 
   Settings, 
@@ -20,6 +20,8 @@ import ExpeditionsModal from './components/ExpeditionsModal';
 import GlobalPropagationBar from './components/GlobalPropagationBar';
 import { AIAnalysis } from './types';
 import { generateAIAnalysis } from './services/aiService';
+import { getBandFromFreq, matchesCallsign } from './utils/radioUtils';
+import * as socket from './services/socket';
 
 export interface Spot {
   id: string;
@@ -56,26 +58,6 @@ interface ExpeditionStatus {
     };
   };
 }
-
-const BANDS = ['160m', '80m', '40m', '30m', '20m', '17m', '15m', '12m', '10m', '6m'];
-const MODES = ['CW', 'FT8', 'FT4', 'SSB'];
-
-const getBandFromFreq = (freq: string): string => {
-  const f = parseFloat(freq);
-  if (f >= 1800 && f <= 2000) return '160m';
-  if (f >= 3500 && f <= 4000) return '80m';
-  if (f >= 7000 && f <= 7300) return '40m';
-  if (f >= 10100 && f <= 10150) return '30m';
-  if (f >= 14000 && f <= 14350) return '20m';
-  if (f >= 18068 && f <= 18168) return '17m';
-  if (f >= 21000 && f <= 21450) return '15m';
-  if (f >= 24890 && f <= 24990) return '12m';
-  if (f >= 28000 && f <= 29700) return '10m';
-  if (f >= 50000 && f <= 54000) return '6m';
-  // If it's already a band name or something else
-  if (freq.toLowerCase().endsWith('m')) return freq;
-  return freq;
-};
 
 const PREFIX_TO_CONTINENT: { [key: string]: string } = {
   '1A': 'EU', '1S': 'AS', '3A': 'EU', '3B': 'AF', '3C': 'AF', '3D': 'AF', '3V': 'AF', '3W': 'AS', '3X': 'AF', '3Y': 'AN',
@@ -193,6 +175,17 @@ export default function App() {
   const [aiAnalyses, setAiAnalyses] = useState<{ [key: string]: AIAnalysis }>({});
   const [analyzingSlots, setAnalyzingSlots] = useState<Set<string>>(new Set());
 
+  // Club Log checks currently in flight, so we de-dupe concurrent requests
+  // without blocking retries when a request fails (see checkClubLog).
+  const inFlightChecks = useRef<Set<string>>(new Set());
+
+  // Latest-value mirrors so the background analysis effect can read current
+  // analysis state without re-running (and looping) on every analysis write.
+  const aiAnalysesRef = useRef(aiAnalyses);
+  const analyzingSlotsRef = useRef(analyzingSlots);
+  useEffect(() => { aiAnalysesRef.current = aiAnalyses; }, [aiAnalyses]);
+  useEffect(() => { analyzingSlotsRef.current = analyzingSlots; }, [analyzingSlots]);
+
   // Load and sync settings on mount
   useEffect(() => {
     const saved = localStorage.getItem('dx_expedition_settings');
@@ -231,14 +224,14 @@ export default function App() {
 
       for (const [key, spots] of Object.entries(slots)) {
         const [callsign, band, mode] = key.split('-');
-        const existing = aiAnalyses[key];
-        
+        const existing = aiAnalysesRef.current[key];
+
         // Conditions for analysis:
         // 1. Not already analyzing this slot
         // 2. No existing analysis OR it's older than 15 mins OR spot count increased by 10
         // 3. Has at least 8 spots OR has a human comment
         const hasHumanComment = spots.some(s => !s.isSkimmer && s.comment && s.comment.length > 4);
-        const shouldAnalyze = !analyzingSlots.has(key) && (
+        const shouldAnalyze = !analyzingSlotsRef.current.has(key) && (
           !existing || 
           (Date.now() - existing.timestamp > 900000) || 
           (spots.length >= existing.spotCount + 10)
@@ -281,7 +274,7 @@ export default function App() {
 
     const timer = setTimeout(analyzeBackground, 5000); // Wait 5s after spots update
     return () => clearTimeout(timer);
-  }, [liveSpots, settings.geminiApiKey, userContinent]);
+  }, [liveSpots, settings.geminiApiKey, settings.disableBackgroundAI, userContinent]);
 
   // Fetch initial DXCC chart if credentials are available
   useEffect(() => {
@@ -348,7 +341,7 @@ export default function App() {
     if (!selectedExpedition || !selectedBand || !selectedMode) return [];
     
     // Find spots for this callsign
-    const expeditionSpots = liveSpots.filter(s => s.dxCall.toUpperCase().includes(selectedExpedition.toUpperCase()));
+    const expeditionSpots = liveSpots.filter(s => matchesCallsign(s.dxCall, selectedExpedition));
     
     // Filter by band and mode, sort by time, take top 10
     return expeditionSpots
@@ -412,99 +405,54 @@ export default function App() {
   };
 
   const setupWebSocket = () => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    let socket: WebSocket | null = null;
-    let reconnectTimer: NodeJS.Timeout | null = null;
-    let isClosing = false;
+    // Subscribe to the shared, auto-reconnecting socket (see services/socket.ts).
+    const offSpot = socket.subscribe('spot', (spot: Spot) => {
+      setLiveSpots(prev => {
+        // Avoid duplicates
+        if (prev.some(s => s.id === spot.id)) return prev;
+        return [spot, ...prev].slice(0, 2000);
+      });
+    });
 
-    const connect = () => {
-      if (isClosing) return;
+    const offStatus = socket.subscribe('status', (data: { status: string }) => {
+      setClusterStatus(data.status as 'Connected' | 'Connecting' | 'Disconnected');
+    });
 
-      if (socket) {
-        socket.onopen = null;
-        socket.onmessage = null;
-        socket.onclose = null;
-        socket.onerror = null;
-        try {
-          socket.close();
-        } catch (e) {
-          console.error('Error closing socket:', e);
-        }
-      }
+    const offOpen = socket.onOpen(() => {
+      setWsConnected(true);
+      // Refresh spots on (re)connect to ensure we didn't miss anything
+      fetchInitialSpots();
+    });
 
-      console.log(`Connecting to WebSocket: ${protocol}//${host}`);
-      socket = new WebSocket(`${protocol}//${host}`);
-
-      socket.onopen = () => {
-        console.log('WebSocket connected to server');
-        setWsConnected(true);
-        if (reconnectTimer) {
-          clearTimeout(reconnectTimer);
-          reconnectTimer = null;
-        }
-        // Refresh spots on reconnect to ensure we didn't miss anything
-        fetchInitialSpots();
-      };
-
-      socket.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          if (message.type === 'spot') {
-            const spot = message.data;
-            setLiveSpots(prev => {
-              // Avoid duplicates
-              if (prev.some(s => s.id === spot.id)) return prev;
-              return [spot, ...prev].slice(0, 2000);
-            });
-          } else if (message.type === 'status') {
-            setClusterStatus(message.data.status);
-          }
-        } catch (e) {
-          console.error('Error parsing WS message:', e);
-        }
-      };
-
-      socket.onclose = (event) => {
-        if (isClosing) return;
-        console.log('WebSocket disconnected:', event.code, event.reason);
-        setWsConnected(false);
-        setClusterStatus('Disconnected');
-        
-        // Don't reconnect immediately if it was an abnormal closure (1006)
-        // to avoid spamming the server
-        const delay = event.code === 1006 ? 5000 : 3000;
-        
-        if (!reconnectTimer) {
-          reconnectTimer = setTimeout(connect, delay);
-        }
-      };
-
-      socket.onerror = (err) => {
-        console.error('WebSocket error:', err);
-        setWsConnected(false);
-      };
-    };
-
-    connect();
+    const offClose = socket.onClose(() => {
+      setWsConnected(false);
+      setClusterStatus('Disconnected');
+    });
 
     return () => {
-      isClosing = true;
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-      if (socket) socket.close();
+      offSpot();
+      offStatus();
+      offOpen();
+      offClose();
     };
   };
 
   const checkClubLog = async (callsign: string, band?: string, mode?: string, freq?: string) => {
     const cacheKey = `${callsign}-${band || 'ALL'}-${mode || 'ALL'}`;
     const now = Date.now();
-    
+
     // Don't check more than once every 5 minutes for the same combination
     if (lastClubLogCheck[cacheKey] && (now - lastClubLogCheck[cacheKey] < 300000)) {
       return;
     }
 
-    setLastClubLogCheck(prev => ({ ...prev, [cacheKey]: now }));
+    // De-dupe concurrent requests for the same slot without recording success yet,
+    // so a transient failure can be retried on the next render instead of being
+    // blocked for 5 minutes.
+    if (inFlightChecks.current.has(cacheKey)) {
+      return;
+    }
+    inFlightChecks.current.add(cacheKey);
 
     try {
       const res = await fetch('/api/private_lookup', {
@@ -523,6 +471,8 @@ export default function App() {
       const data = await res.json();
 
       if (res.ok && data && typeof data === 'object') {
+        // Only record the timestamp on success, so failures are retried later.
+        setLastClubLogCheck(prev => ({ ...prev, [cacheKey]: now }));
         setExpeditionStatus(prev => {
           const current = prev[callsign] || { dxccConfirmed: false, dxccWorked: false, bandModeStatus: {} };
           
@@ -562,6 +512,8 @@ export default function App() {
       }
     } catch (err) {
       console.error('Club Log check failed', err);
+    } finally {
+      inFlightChecks.current.delete(cacheKey);
     }
   };
 
@@ -602,8 +554,7 @@ export default function App() {
     // Use spotLifetime from settings (default to 30 minutes if not set)
     const lifetimeMs = (settings.spotLifetime || 30) * 60 * 1000;
     const cutoffTime = Date.now() - lifetimeMs;
-    const userContinent = getContinentFromCallsign(settings.myCallsign);
-    
+
     liveSpots.forEach(spot => {
       const spotTime = new Date(spot.timestamp).getTime();
       if (spotTime < cutoffTime) return;
@@ -614,7 +565,7 @@ export default function App() {
       }
 
       // Find if this spot belongs to an expedition
-      const exp = allExpeditions.find(e => spot.dxCall.toUpperCase().includes(e.callsign.toUpperCase()));
+      const exp = allExpeditions.find(e => matchesCallsign(spot.dxCall, e.callsign));
       if (exp) {
         if (!grouped[exp.callsign]) grouped[exp.callsign] = [];
         
@@ -634,7 +585,7 @@ export default function App() {
     });
 
     return grouped;
-  }, [liveSpots, allExpeditions, settings.spotLifetime]);
+  }, [liveSpots, allExpeditions, settings.spotLifetime, settings.onlyMyContinent, userContinent]);
 
   // Trigger Club Log checks in a separate effect
   useEffect(() => {

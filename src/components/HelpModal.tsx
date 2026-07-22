@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, HelpCircle, Radio, Settings, Globe, Zap, CheckCircle2, Circle, Mail, Coffee, Github, ShieldCheck, Sparkles, AlertCircle, Calendar } from 'lucide-react';
-import { APP_VERSION } from '../version';
+import { GIT_HASH, BUILD_TIME } from '../version';
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -9,6 +9,10 @@ interface HelpModalProps {
 }
 
 export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
+  const buildDate = BUILD_TIME
+    ? new Date(BUILD_TIME).toISOString().slice(0, 16).replace('T', ' ') + ' UTC'
+    : '';
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -230,7 +234,10 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
             <div className="p-6 bg-white/5 border-t border-white/5 flex items-center justify-center">
               <div className="flex items-center gap-2 text-zinc-500 text-xs font-medium uppercase tracking-widest">
                 <Radio className="w-4 h-4" />
-                <span>DX Radar v{APP_VERSION}</span>
+                <span>
+                  DX Radar
+                  <span className="text-zinc-600 normal-case"> · {GIT_HASH}{buildDate ? ` · ${buildDate}` : ''}</span>
+                </span>
               </div>
             </div>
           </motion.div>

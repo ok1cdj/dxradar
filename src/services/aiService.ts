@@ -1,6 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
 import { Spot } from "../App";
 
+// TODO: confirm this id against Google's current model list before shipping.
+// Override at build time with VITE_GEMINI_MODEL if needed.
+const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || "gemini-3.1-flash-lite-preview";
+
 export async function generateAIAnalysis(
   apiKey: string,
   callsign: string,
@@ -51,10 +55,16 @@ export async function generateAIAnalysis(
     - **Strong** signals in **${userContinent}** (peaking -04dB).
   `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.1-flash-lite-preview",
-    contents: prompt,
-  });
+  try {
+    const response = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: prompt,
+    });
 
-  return response.text || "Could not generate summary.";
+    return response.text || "Could not generate summary.";
+  } catch (err) {
+    // Surface the model id so a bad/unknown model is obvious at runtime.
+    console.error(`Gemini request failed (model="${GEMINI_MODEL}")`, err);
+    throw err;
+  }
 }

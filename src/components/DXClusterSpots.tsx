@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Radio, Zap, Clock, Wifi, WifiOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { matchesCallsign } from '../utils/radioUtils';
+import { subscribe, onOpen, onClose } from '../services/socket';
 
 interface Spot {
   id: string;
@@ -22,7 +24,6 @@ interface DXClusterSpotsProps {
 export default function DXClusterSpots({ filterCallsign, filterCallsigns }: DXClusterSpotsProps) {
   const [spots, setSpots] = useState<Spot[]>([]);
   const [connected, setConnected] = useState(false);
-  const ws = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     // Fetch initial spots
@@ -31,39 +32,24 @@ export default function DXClusterSpots({ filterCallsign, filterCallsigns }: DXCl
       .then(data => setSpots(data))
       .catch(err => console.error('Failed to fetch initial spots', err));
 
-    // Connect WebSocket
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    const socket = new WebSocket(`${protocol}//${host}`);
-
-    socket.onopen = () => {
-      console.log('Connected to DX Cluster WebSocket');
-      setConnected(true);
-    };
-
-    socket.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === 'spot') {
-        setSpots(prev => [message.data, ...prev].slice(0, 100));
-      }
-    };
-
-    socket.onclose = () => {
-      console.log('Disconnected from DX Cluster WebSocket');
-      setConnected(false);
-    };
-
-    ws.current = socket;
+    // Subscribe to the shared, auto-reconnecting socket.
+    const offSpot = subscribe('spot', (spot: Spot) => {
+      setSpots(prev => [spot, ...prev].slice(0, 100));
+    });
+    const offOpen = onOpen(() => setConnected(true));
+    const offClose = onClose(() => setConnected(false));
 
     return () => {
-      socket.close();
+      offSpot();
+      offOpen();
+      offClose();
     };
   }, []);
 
-  const filteredSpots = filterCallsign 
-    ? spots.filter(s => s.dxCall.toUpperCase().includes(filterCallsign.toUpperCase()))
+  const filteredSpots = filterCallsign
+    ? spots.filter(s => matchesCallsign(s.dxCall, filterCallsign))
     : filterCallsigns && filterCallsigns.length > 0
-    ? spots.filter(s => filterCallsigns.some(c => s.dxCall.toUpperCase().includes(c.toUpperCase())))
+    ? spots.filter(s => filterCallsigns.some(c => matchesCallsign(s.dxCall, c)))
     : spots;
 
   return (

@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, CheckCircle2, Circle, HelpCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { DX_BANDS } from '../utils/radioUtils';
 
 interface StatusModalProps {
   isOpen: boolean;
@@ -23,7 +24,7 @@ interface StatusModalProps {
   };
 }
 
-const BANDS = ['160m', '80m', '40m', '30m', '20m', '17m', '15m', '12m', '10m', '6m'];
+const BANDS = DX_BANDS;
 const MODES = ['CW', 'DIGI', 'SSB'];
 
 export default function StatusModal({ isOpen, onClose, callsign, status }: StatusModalProps) {

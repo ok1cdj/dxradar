@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Sun, Activity, AlertTriangle } from 'lucide-react';
 import PropagationModal from './PropagationModal';
 import { PropagationData } from '../types';
+import { subscribe } from '../services/socket';
 
 export default function GlobalPropagationBar() {
   const [data, setData] = useState<PropagationData | null>(null);
@@ -18,24 +19,13 @@ export default function GlobalPropagationBar() {
       })
       .catch(err => console.error('Failed to fetch propagation data', err));
 
-    // WebSocket listener
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    const socket = new WebSocket(`${protocol}//${host}`);
+    // Subscribe to propagation updates on the shared, auto-reconnecting socket.
+    const off = subscribe('propagation', (payload: PropagationData) => {
+      console.log('WS propagation update:', payload);
+      setData(payload);
+    });
 
-    socket.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        if (message.type === 'propagation') {
-          console.log('WS propagation update:', message.data);
-          setData(message.data);
-        }
-      } catch (e) {
-        // Ignore parsing errors
-      }
-    };
-
-    return () => socket.close();
+    return off;
   }, []);
 
   if (!data) return null;

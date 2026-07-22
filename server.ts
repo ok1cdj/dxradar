@@ -6,11 +6,21 @@ import Parser from "rss-parser";
 import net from "net";
 import { WebSocketServer, WebSocket } from "ws";
 import http from "http";
-import { execSync } from "child_process";
+import { execFile } from "child_process";
+import { promisify } from "util";
+import crypto from "crypto";
 import "dotenv/config";
+
+const execFileAsync = promisify(execFile);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Short, stable hash of Club Log credentials, used to scope server-side caches
+// so one user's chart is never served to another on a shared server.
+function credHash(email: string, password: string): string {
+  return crypto.createHash("sha256").update(`${email}\0${password}`).digest("hex").slice(0, 16);
+}
 
 function guessModeFromFreq(freqKhz: number): string {
   // Common FT8 frequencies
@@ -100,19 +110,28 @@ async function startServer() {
   const server = http.createServer(app);
 
   // Použití bezpečnostních hlaviček, zejména Content-Security-Policy
-  // pro ochranu citlivých uživatelských dat (API klíče) v localStorage
+  // pro ochranu citlivých uživatelských dat (API klíče) v localStorage.
+  // Vite's dev server needs 'unsafe-eval'; production build does not, so we only
+  // allow it in development.
+  const isProduction = process.env.NODE_ENV === "production";
+  const scriptSrc = isProduction
+    ? "script-src 'self' 'unsafe-inline' https://stats.ok1cdj.com; "
+    : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://stats.ok1cdj.com; ";
   app.use((req, res, next) => {
     res.setHeader(
       "Content-Security-Policy",
       "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://stats.ok1cdj.com; " +
+      scriptSrc +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "connect-src 'self' ws: wss: https://stats.ok1cdj.com https://generativelanguage.googleapis.com; " +
       "img-src 'self' data: blob: https:; " +
-      "font-src 'self' data: https://fonts.gstatic.com;"
+      "font-src 'self' data: https://fonts.gstatic.com; " +
+      "frame-ancestors 'none';"
     );
     res.setHeader("X-Content-Type-Options", "nosniff");
-    res.setHeader("X-XSS-Protection", "1; mode=block");
+    // The legacy X-XSS-Protection filter is deprecated and can introduce issues; CSP replaces it.
+    res.setHeader("X-XSS-Protection", "0");
+    res.setHeader("X-Frame-Options", "DENY");
     res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
     next();
   });
@@ -476,13 +495,17 @@ async function startServer() {
         
         let html = "";
         try {
-          // Use curl as a fallback because node-fetch gets 403 Forbidden on some hosting environments (Cloudflare/WAF)
-          const curlCommand = `curl -s "https://www.hamradiotimeline.com/timeline/dxw_timeline_1_1.php" ` +
-            `-H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" ` +
-            `-H "Referer: https://www.dx-world.net/" ` +
-            `-H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"`;
-          
-          html = execSync(curlCommand, { encoding: 'utf8', timeout: 10000 });
+          // Use curl as a fallback because node-fetch gets 403 Forbidden on some hosting environments (Cloudflare/WAF).
+          // execFileAsync (not execSync) keeps the Node event loop responsive while curl runs, and passing
+          // args as an array avoids shell parsing/injection.
+          const { stdout } = await execFileAsync("curl", [
+            "-s",
+            "https://www.hamradiotimeline.com/timeline/dxw_timeline_1_1.php",
+            "-H", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "-H", "Referer: https://www.dx-world.net/",
+            "-H", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+          ], { encoding: "utf8", timeout: 10000, maxBuffer: 10 * 1024 * 1024 });
+          html = stdout;
         } catch (curlError) {
           console.error("Curl fetch failed, trying node-fetch as fallback:", curlError);
           const timelineRes = await fetch("https://www.hamradiotimeline.com/timeline/dxw_timeline_1_1.php", {
@@ -937,14 +960,17 @@ async function startServer() {
 
   async function getDxccChart(email: string, password: string, myCall: string) {
     const now = Date.now();
-    const cached = dxccChartCaches.get(myCall);
+    // Scope the cache to the credentials, not just the callsign, so different
+    // Club Log accounts using the same callsign don't read each other's charts.
+    const cacheKey = `${myCall}::${credHash(email, password)}`;
+    const cached = dxccChartCaches.get(cacheKey);
     if (cached && (now - cached.timestamp < CHART_CACHE_TTL)) {
       return cached.data;
     }
 
     // Deduplicate concurrent requests
-    if (dxccChartPromises.has(myCall)) {
-      return dxccChartPromises.get(myCall);
+    if (dxccChartPromises.has(cacheKey)) {
+      return dxccChartPromises.get(cacheKey);
     }
 
     const fetchPromise = (async () => {
@@ -1004,18 +1030,18 @@ async function startServer() {
 
         console.log(`Successfully fetched and merged charts for ${myCall}. Total DXCCs: ${Object.keys(normalizedChart).length}`);
         
-        dxccChartCaches.set(myCall, { data: normalizedChart, timestamp: Date.now() });
+        dxccChartCaches.set(cacheKey, { data: normalizedChart, timestamp: Date.now() });
         return normalizedChart;
       } catch (error) {
         console.error(`Error fetching DXCC chart for ${myCall}:`, error);
-        dxccChartPromises.delete(myCall); // Clear on error so next request can retry
+        dxccChartPromises.delete(cacheKey); // Clear on error so next request can retry
         throw error;
       } finally {
-        dxccChartPromises.delete(myCall);
+        dxccChartPromises.delete(cacheKey);
       }
     })();
 
-    dxccChartPromises.set(myCall, fetchPromise);
+    dxccChartPromises.set(cacheKey, fetchPromise);
     return fetchPromise;
   }
 
@@ -1046,7 +1072,7 @@ async function startServer() {
     }
 
     // Check status cache first
-    const statusCacheKey = `${myCallsign}-${callsign}-${band || 'ALL'}-${mode || 'ALL'}`;
+    const statusCacheKey = `${credHash(clublogEmail, clublogPassword)}-${myCallsign}-${callsign}-${band || 'ALL'}-${mode || 'ALL'}`;
     const cachedStatus = statusCache.get(statusCacheKey);
     if (cachedStatus && (Date.now() - cachedStatus.timestamp < STATUS_CACHE_TTL)) {
       return res.json(cachedStatus.data);

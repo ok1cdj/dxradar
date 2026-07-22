@@ -158,6 +158,8 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
     if (!cryptoPassword) {
       setCryptoStatus('error');
       setCryptoMessage('Password is required for import');
+      // Clear the input so re-selecting the same file after entering a password still fires onChange.
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
     const reader = new FileReader();

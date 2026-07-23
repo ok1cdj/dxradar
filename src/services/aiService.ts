@@ -4,17 +4,21 @@ import { Spot } from "../App";
 // TODO: confirm this id against Google's current model list before shipping.
 // Override at build time with VITE_GEMINI_MODEL if needed.
 const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || "gemini-3.1-flash-lite-preview";
+const DEEPSEEK_MODEL = import.meta.env.VITE_DEEPSEEK_MODEL || "deepseek-chat";
+
+export interface AIConfig {
+  provider: 'gemini' | 'deepseek';
+  apiKey: string;
+}
 
 export async function generateAIAnalysis(
-  apiKey: string,
+  ai: AIConfig,
   callsign: string,
   band: string,
   mode: string,
   spots: Spot[],
   userContinent: string
 ): Promise<string> {
-  const ai = new GoogleGenAI({ apiKey });
-
   const spotsContext = spots.slice(0, 15).map(s => ({
     spotter: s.spotter,
     freq: s.freq,
@@ -55,8 +59,28 @@ export async function generateAIAnalysis(
     - **Strong** signals in **${userContinent}** (peaking -04dB).
   `;
 
+  if (ai.provider === 'deepseek') {
+    // DeepSeek is reached through the same-origin server proxy (avoids CORS; the key
+    // is passed per-request and never stored server-side).
+    try {
+      const res = await fetch('/api/ai_analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: ai.apiKey, prompt, model: DEEPSEEK_MODEL }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || `DeepSeek request failed (${res.status})`);
+      return data.text || "Could not generate summary.";
+    } catch (err) {
+      console.error(`DeepSeek request failed (model="${DEEPSEEK_MODEL}")`, err);
+      throw err;
+    }
+  }
+
+  // Default: Gemini via the client-side SDK (supports browser calls with CORS).
+  const genai = new GoogleGenAI({ apiKey: ai.apiKey });
   try {
-    const response = await ai.models.generateContent({
+    const response = await genai.models.generateContent({
       model: GEMINI_MODEL,
       contents: prompt,
     });

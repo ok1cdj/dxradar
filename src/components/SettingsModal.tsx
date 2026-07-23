@@ -12,7 +12,9 @@ export interface Settings {
   manualCallsigns: string;
   hideConfirmed: boolean;
   onlyMyContinent: boolean;
+  aiProvider: 'gemini' | 'deepseek';
   geminiApiKey: string;
+  deepseekApiKey: string;
   disableBackgroundAI: boolean;
 }
 
@@ -24,7 +26,9 @@ const DEFAULT_SETTINGS: Settings = {
   manualCallsigns: '',
   hideConfirmed: false,
   onlyMyContinent: false,
+  aiProvider: 'gemini',
   geminiApiKey: '',
+  deepseekApiKey: '',
   disableBackgroundAI: false
 };
 
@@ -283,21 +287,60 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                 </h3>
               </div>
               <div>
-                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1 ml-1">Gemini API Key</label>
-                <div className="relative">
-                  <input 
-                    type="password" 
-                    value={settings.geminiApiKey}
-                    onChange={e => setSettings({...settings, geminiApiKey: e.target.value})}
-                    placeholder="Enter your Gemini API Key"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 pl-10 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
-                  />
-                  <Key className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1 ml-1">AI Provider</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['gemini', 'deepseek'] as const).map(provider => (
+                    <button
+                      key={provider}
+                      type="button"
+                      onClick={() => setSettings({...settings, aiProvider: provider})}
+                      className={`py-2 rounded-xl text-xs font-bold uppercase tracking-widest border transition-all ${
+                        settings.aiProvider === provider
+                          ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                          : 'bg-white/5 text-zinc-500 border-white/10 hover:bg-white/10'
+                      }`}
+                    >
+                      {provider === 'gemini' ? 'Gemini' : 'DeepSeek'}
+                    </button>
+                  ))}
                 </div>
-                <p className="mt-1.5 text-[9px] text-zinc-500 leading-relaxed px-1">
-                  Required for AI spot analysis. Your key is stored locally in your browser.
-                </p>
               </div>
+
+              {settings.aiProvider === 'gemini' ? (
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1 ml-1">Gemini API Key</label>
+                  <div className="relative">
+                    <input
+                      type="password"
+                      value={settings.geminiApiKey}
+                      onChange={e => setSettings({...settings, geminiApiKey: e.target.value})}
+                      placeholder="Enter your Gemini API Key"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 pl-10 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                    />
+                    <Key className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                  <p className="mt-1.5 text-[9px] text-zinc-500 leading-relaxed px-1">
+                    Required for AI spot analysis. Your key is stored locally in your browser.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1 ml-1">DeepSeek API Key</label>
+                  <div className="relative">
+                    <input
+                      type="password"
+                      value={settings.deepseekApiKey}
+                      onChange={e => setSettings({...settings, deepseekApiKey: e.target.value})}
+                      placeholder="Enter your DeepSeek API Key"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 pl-10 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                    />
+                    <Key className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                  <p className="mt-1.5 text-[9px] text-zinc-500 leading-relaxed px-1">
+                    Required for AI spot analysis. Your key is stored locally in your browser and sent per-request to the analysis proxy (never stored on the server).
+                  </p>
+                </div>
+              )}
 
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
                 <div className="flex-1 pr-4">

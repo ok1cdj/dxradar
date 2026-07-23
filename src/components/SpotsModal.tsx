@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Clock, Radio, User, Zap, Sparkles, Loader2, BrainCircuit, RefreshCw } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
 import Markdown from 'react-markdown';
 import { AIAnalysis } from '../types';
 import { generateAIAnalysis } from '../services/aiService';
@@ -27,7 +26,8 @@ interface SpotsModalProps {
   mode: string;
   spots: Spot[];
   userContinent?: string;
-  geminiApiKey?: string;
+  aiProvider?: 'gemini' | 'deepseek';
+  aiApiKey?: string;
   cachedAnalysis?: AIAnalysis;
   onAnalysisUpdate?: (analysis: AIAnalysis) => void;
 }
@@ -39,19 +39,21 @@ export default function SpotsModal({
   band, 
   mode, 
   spots, 
-  userContinent, 
-  geminiApiKey,
+  userContinent,
+  aiProvider = 'gemini',
+  aiApiKey,
   cachedAnalysis,
   onAnalysisUpdate
 }: SpotsModalProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const providerLabel = aiProvider === 'deepseek' ? 'DeepSeek' : 'Gemini';
 
   const analyzeWithAI = async () => {
-    if (spots.length === 0 || !geminiApiKey) return;
+    if (spots.length === 0 || !aiApiKey) return;
     setIsAnalyzing(true);
     try {
       const summary = await generateAIAnalysis(
-        geminiApiKey,
+        { provider: aiProvider, apiKey: aiApiKey },
         callsign,
         band,
         mode,
@@ -119,26 +121,26 @@ export default function SpotsModal({
                   <div className="flex items-center gap-3">
                     <button
                       onClick={analyzeWithAI}
-                      disabled={!geminiApiKey}
+                      disabled={!aiApiKey}
                       className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl border transition-all group ${
-                        geminiApiKey 
-                          ? 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border-blue-500/20' 
+                        aiApiKey
+                          ? 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border-blue-500/20'
                           : 'bg-zinc-500/5 text-zinc-600 border-white/5 cursor-not-allowed'
                       }`}
                     >
-                      <Sparkles className={`w-4 h-4 ${geminiApiKey ? 'group-hover:rotate-12 transition-transform' : ''}`} />
-                      Analyze with Gemini AI
+                      <Sparkles className={`w-4 h-4 ${aiApiKey ? 'group-hover:rotate-12 transition-transform' : ''}`} />
+                      Analyze with {providerLabel} AI
                     </button>
-                    {!geminiApiKey && (
+                    {!aiApiKey && (
                       <span className="text-[10px] text-zinc-600 font-medium italic">
-                        Set Gemini API Key in Settings to enable
+                        Set {providerLabel} API Key in Settings to enable
                       </span>
                     )}
                   </div>
                 ) : isAnalyzing ? (
                   <div className="flex items-center gap-3 text-blue-400 text-xs font-bold animate-pulse">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Gemini is analyzing spots...
+                    {providerLabel} is analyzing spots...
                   </div>
                 ) : cachedAnalysis ? (
                   <motion.div 

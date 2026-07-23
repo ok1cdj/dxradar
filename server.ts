@@ -924,7 +924,44 @@ async function startServer() {
   app.get("/api/spots", (req, res) => {
     res.json(spotsCache);
   });
-  
+
+  // Proxy for DeepSeek AI analysis. The client sends its own API key per-request;
+  // it is forwarded to DeepSeek and never stored or logged.
+  app.post("/api/ai_analyze", async (req, res) => {
+    const { apiKey, prompt, model } = req.body;
+    if (!apiKey) return res.status(401).json({ error: "AI API key missing" });
+    if (!prompt) return res.status(400).json({ error: "Missing prompt" });
+
+    const base = process.env.DEEPSEEK_API_BASE || "https://api.deepseek.com";
+    try {
+      const response = await fetchWithRetry(`${base}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: model || "deepseek-chat",
+          messages: [{ role: "user", content: prompt }],
+          stream: false,
+        }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        return res.status(response.status).json({ error: text || "DeepSeek request failed" });
+      }
+
+      const data = await response.json();
+      const text = data?.choices?.[0]?.message?.content || "";
+      res.json({ text });
+    } catch (error) {
+      // Never log the key; only the error message.
+      console.error("DeepSeek proxy failed:", error instanceof Error ? error.message : error);
+      res.status(500).json({ error: "Failed to reach DeepSeek" });
+    }
+  });
+
   // Cache for expeditions
   let expeditionsCache: any[] = [];
   let lastFetchTime = 0;

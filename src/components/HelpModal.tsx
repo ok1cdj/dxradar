@@ -94,7 +94,7 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                     <Sparkles className="w-6 h-6 text-blue-400 shrink-0" />
                     <div>
                       <h4 className="text-white font-bold mb-1">AI Spot Analysis</h4>
-                      <p className="text-sm text-zinc-400">Intelligent background analysis of DX spots using Gemini AI. It automatically identifies split frequency, signal strength, and operator behavior before you even click.</p>
+                      <p className="text-sm text-zinc-400">Intelligent background analysis of DX spots using Gemini or DeepSeek AI (your choice in Settings). It automatically identifies split frequency, signal strength, and operator behavior before you even click.</p>
                     </div>
                   </div>
 

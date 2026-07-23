@@ -165,7 +165,9 @@ export default function App() {
     manualCallsigns: '',
     hideConfirmed: false,
     onlyMyContinent: false,
+    aiProvider: 'gemini',
     geminiApiKey: '',
+    deepseekApiKey: '',
     disableBackgroundAI: false
   });
 
@@ -210,7 +212,8 @@ export default function App() {
 
   // Background AI Analysis Logic
   useEffect(() => {
-    if (!settings.geminiApiKey || settings.disableBackgroundAI || liveSpots.length === 0) return;
+    const aiApiKey = settings.aiProvider === 'deepseek' ? settings.deepseekApiKey : settings.geminiApiKey;
+    if (!aiApiKey || settings.disableBackgroundAI || liveSpots.length === 0) return;
 
     const analyzeBackground = async () => {
       // Group spots by slot (callsign-band-mode)
@@ -241,7 +244,7 @@ export default function App() {
           setAnalyzingSlots(prev => new Set(prev).add(key));
           try {
             const summary = await generateAIAnalysis(
-              settings.geminiApiKey,
+              { provider: settings.aiProvider, apiKey: aiApiKey },
               callsign,
               band,
               mode,
@@ -274,7 +277,7 @@ export default function App() {
 
     const timer = setTimeout(analyzeBackground, 5000); // Wait 5s after spots update
     return () => clearTimeout(timer);
-  }, [liveSpots, settings.geminiApiKey, settings.disableBackgroundAI, userContinent]);
+  }, [liveSpots, settings.aiProvider, settings.geminiApiKey, settings.deepseekApiKey, settings.disableBackgroundAI, userContinent]);
 
   // Fetch initial DXCC chart if credentials are available
   useEffect(() => {
@@ -756,7 +759,8 @@ export default function App() {
           mode={selectedMode}
           spots={filteredSpotsForModal}
           userContinent={userContinent}
-          geminiApiKey={settings.geminiApiKey}
+          aiProvider={settings.aiProvider}
+          aiApiKey={settings.aiProvider === 'deepseek' ? settings.deepseekApiKey : settings.geminiApiKey}
           cachedAnalysis={aiAnalyses[`${selectedExpedition}-${selectedBand}-${selectedMode}`]}
           onAnalysisUpdate={(analysis) => {
             setAiAnalyses(prev => ({

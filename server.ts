@@ -941,9 +941,12 @@ async function startServer() {
           "Authorization": `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: model || "deepseek-chat",
+          model: model || "deepseek-v4-flash",
           messages: [{ role: "user", content: prompt }],
           stream: false,
+          // Disable thinking mode: this is a short summary task, so we want the fast/cheap
+          // non-reasoning path (also avoids the reasoning_content round-trip requirement).
+          thinking: { type: "disabled" },
         }),
       });
 

@@ -36,18 +36,18 @@ export default function GlobalPropagationBar() {
     <>
       <div 
         onClick={() => setIsModalOpen(true)}
-        className="w-full bg-zinc-900/80 backdrop-blur-md border-b border-white/5 px-6 py-2 flex items-center justify-between overflow-x-auto custom-scrollbar gap-8 cursor-pointer hover:bg-zinc-800/80 transition-colors group/bar"
+        className="w-full bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-black/10 dark:border-white/5 px-6 py-2 flex items-center justify-between overflow-x-auto custom-scrollbar gap-8 cursor-pointer hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-colors group/bar"
       >
         <div className="flex items-center gap-6 shrink-0">
           <div className="flex items-center gap-2">
             <Sun className="w-4 h-4 text-amber-500" />
             <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">SFI</span>
-            <span className="text-xs font-mono font-bold text-white">{data.sfi}</span>
+            <span className="text-xs font-mono font-bold text-zinc-900 dark:text-white">{data.sfi}</span>
           </div>
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-emerald-500" />
             <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Kp</span>
-            <span className={`text-xs font-mono font-bold ${data.kp >= 4 ? 'text-rose-500' : 'text-white'}`}>{data.kp}</span>
+            <span className={`text-xs font-mono font-bold ${data.kp >= 4 ? 'text-rose-500' : 'text-zinc-900 dark:text-white'}`}>{data.kp}</span>
           </div>
           {data.storm && data.storm.probability >= 50 && (
             <div className="flex items-center gap-1 px-2 py-0.5 bg-rose-500/20 border border-rose-500/30 rounded-full animate-pulse">
@@ -62,21 +62,21 @@ export default function GlobalPropagationBar() {
             const status = data.bands[band];
             if (!status) return null;
             return (
-              <div key={band} className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white/5 transition-colors group">
+              <div key={band} className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
                 <div 
                   className="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.5)]" 
                   style={{ backgroundColor: status.color, boxShadow: `0 0 8px ${status.color}40` }}
                   title={`${band}: ${status.status} (${status.val})`}
                 />
-                <span className="text-[10px] font-bold text-zinc-400 group-hover:text-zinc-200 transition-colors">{band}</span>
+                <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-800 dark:group-hover:text-zinc-200 transition-colors">{band}</span>
               </div>
             );
           })}
         </div>
 
         <div className="shrink-0 flex items-center gap-2">
-          <span className="text-[8px] font-black uppercase tracking-tighter text-zinc-700 group-hover/bar:text-zinc-500 transition-colors">WSPR Index by HB9VQQ</span>
-          <div className="w-1 h-1 rounded-full bg-zinc-800 group-hover/bar:bg-blue-500 transition-colors" />
+          <span className="text-[8px] font-black uppercase tracking-tighter text-zinc-400 dark:text-zinc-700 group-hover/bar:text-zinc-500 transition-colors">WSPR Index by HB9VQQ</span>
+          <div className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-800 group-hover/bar:bg-blue-500 transition-colors" />
         </div>
       </div>
 

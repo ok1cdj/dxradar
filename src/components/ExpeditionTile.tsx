@@ -29,9 +29,9 @@ export default function ExpeditionTile({ expedition, activeBands, dxccConfirmed,
   
   const hasUnconfirmedActiveBand = activeBands.some(b => b.status !== 'confirmed');
   
-  const bgColor = 'bg-zinc-900/40';
-  const borderColor = 'border-white/5';
-  const textColor = 'text-zinc-100';
+  const bgColor = 'bg-zinc-100 dark:bg-zinc-900/40';
+  const borderColor = 'border-black/5 dark:border-white/5';
+  const textColor = 'text-zinc-900 dark:text-zinc-100';
   const accentColor = 'text-zinc-500';
 
   const urgency = getExpeditionUrgency(expedition.dates);
@@ -40,7 +40,7 @@ export default function ExpeditionTile({ expedition, activeBands, dxccConfirmed,
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`relative overflow-hidden p-6 rounded-3xl border ${bgColor} ${borderColor} transition-all duration-300 text-left flex flex-col h-full group hover:border-white/10 shadow-lg`}
+      className={`relative overflow-hidden p-6 rounded-3xl border ${bgColor} ${borderColor} transition-all duration-300 text-left flex flex-col h-full group hover:border-black/10 dark:hover:border-white/10 shadow-lg`}
     >
       <div className="flex justify-between items-start mb-4">
         <button 
@@ -58,7 +58,7 @@ export default function ExpeditionTile({ expedition, activeBands, dxccConfirmed,
                 className="text-amber-500"
                 title={urgency === 'last-day' ? "Last day!" : "Last 2 days!"}
               >
-                <AlertCircle className="w-6 h-6 fill-current bg-black rounded-full" />
+                <AlertCircle className="w-6 h-6 fill-current bg-white dark:bg-black rounded-full" />
               </motion.div>
             )}
           </div>
@@ -70,7 +70,7 @@ export default function ExpeditionTile({ expedition, activeBands, dxccConfirmed,
         <div className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${
           !dxccWorked ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 
           hasUnconfirmedActiveBand ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 
-          'bg-zinc-800 text-zinc-500'
+          'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'
         }`}>
           {!dxccWorked ? 'NEW DXCC' : hasUnconfirmedActiveBand ? 'NEW SLOT' : 'CONFIRMED'}
         </div>
@@ -87,11 +87,11 @@ export default function ExpeditionTile({ expedition, activeBands, dxccConfirmed,
               className={`flex flex-col p-2 rounded-xl border transition-all cursor-pointer ${
                 ab.status === 'confirmed' ? 'bg-emerald-500/5 border-emerald-500/10 hover:bg-emerald-500/10' :
                 ab.status === 'worked' ? 'bg-amber-500/5 border-amber-500/10 hover:bg-amber-500/10' :
-                'bg-white/5 border-white/5 hover:bg-white/10'
+                'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 hover:bg-black/10 dark:hover:bg-white/10'
               }`}
             >
               <div className="flex justify-between items-center">
-                <span className={`text-sm font-bold ${ab.status === 'confirmed' ? 'text-emerald-500/70' : 'text-white/90'}`}>{ab.freq}</span>
+                <span className={`text-sm font-bold ${ab.status === 'confirmed' ? 'text-emerald-500/70' : 'text-zinc-900 dark:text-white/90'}`}>{ab.freq}</span>
                 <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${
                   ab.mode === 'FT8' ? 'bg-purple-500/10 text-purple-400/70' :
                   ab.mode === 'CW' ? 'bg-blue-500/10 text-blue-400/70' :
@@ -100,7 +100,7 @@ export default function ExpeditionTile({ expedition, activeBands, dxccConfirmed,
                   {ab.mode}
                 </span>
               </div>
-              <div className="text-[8px] text-zinc-600 mt-1 flex items-center gap-1">
+              <div className="text-[8px] text-zinc-400 dark:text-zinc-600 mt-1 flex items-center gap-1">
                 <Clock className="w-2 h-2" />
                 {ab.lastSeen}
               </div>
@@ -109,7 +109,7 @@ export default function ExpeditionTile({ expedition, activeBands, dxccConfirmed,
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-white/5 flex flex-col gap-3">
+      <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5 flex flex-col gap-3">
         <div className="flex items-center justify-end opacity-40">
           <div className="text-[10px] font-mono text-zinc-500">
             {expedition.dates}
@@ -134,7 +134,7 @@ export default function ExpeditionTile({ expedition, activeBands, dxccConfirmed,
               const isActive = cellEndDate >= start && cellDate <= end;
               
               if (!isActive) {
-                return <div key={i} className="flex-1 bg-white/5 rounded-full" />;
+                return <div key={i} className="flex-1 bg-black/5 dark:bg-white/5 rounded-full" />;
               }
               
               if (d < today) {

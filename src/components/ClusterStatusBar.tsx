@@ -23,7 +23,7 @@ interface ClusterStatusBarProps {
 export default function ClusterStatusBar({ lastSpot, clusterStatus, wsConnected }: ClusterStatusBarProps) {
 
   return (
-    <div className="flex items-center justify-between gap-4 py-3 px-6 bg-black/40 border-t border-white/5 backdrop-blur-md">
+    <div className="flex items-center justify-between gap-4 py-3 px-6 bg-white/70 dark:bg-black/40 border-t border-black/10 dark:border-white/5 backdrop-blur-md">
       <div className="flex items-center gap-4 min-w-0">
         <div className="flex items-center gap-2">
           {clusterStatus === 'Connected' ? (
@@ -38,8 +38,8 @@ export default function ClusterStatusBar({ lastSpot, clusterStatus, wsConnected 
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 bg-zinc-700 rounded-full" />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Cluster Offline</span>
+              <div className="w-2 h-2 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Cluster Offline</span>
             </div>
           )}
           {!wsConnected && (
@@ -58,8 +58,8 @@ export default function ClusterStatusBar({ lastSpot, clusterStatus, wsConnected 
             >
               <span className="text-zinc-500 font-medium uppercase tracking-wider">Last Spot:</span>
               <div className="flex items-center gap-2">
-                <span className="font-mono font-black text-white text-sm tracking-tighter">{lastSpot.dxCall}</span>
-                <span className="font-mono text-zinc-400">{lastSpot.freq}</span>
+                <span className="font-mono font-black text-zinc-900 dark:text-white text-sm tracking-tighter">{lastSpot.dxCall}</span>
+                <span className="font-mono text-zinc-600 dark:text-zinc-400">{lastSpot.freq}</span>
                 <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase ${
                   lastSpot.mode === 'FT8' ? 'bg-purple-500/20 text-purple-400' : 
                   lastSpot.mode === 'FT4' ? 'bg-indigo-500/20 text-indigo-400' :
@@ -68,12 +68,12 @@ export default function ClusterStatusBar({ lastSpot, clusterStatus, wsConnected 
                 }`}>
                   {lastSpot.mode}
                 </span>
-                <span className="text-zinc-600 flex items-center gap-1">
+                <span className="text-zinc-400 dark:text-zinc-600 flex items-center gap-1">
                   de {lastSpot.spotter}
                   {lastSpot.isSkimmer && <Zap className="w-2.5 h-2.5 text-amber-500" />}
                 </span>
                 {lastSpot.comment && (
-                  <span className="text-zinc-700 italic text-[10px] truncate max-w-[100px]">
+                  <span className="text-zinc-400 dark:text-zinc-700 italic text-[10px] truncate max-w-[100px]">
                     {lastSpot.comment}
                   </span>
                 )}
@@ -83,7 +83,7 @@ export default function ClusterStatusBar({ lastSpot, clusterStatus, wsConnected 
         </AnimatePresence>
       </div>
 
-      <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-600 whitespace-nowrap">
+      <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-600 whitespace-nowrap">
         <Clock className="w-3 h-3" />
         {lastSpot ? lastSpot.time : '--:--Z'}
       </div>

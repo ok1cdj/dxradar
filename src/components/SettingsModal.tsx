@@ -189,21 +189,21 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 dark:bg-black/80 backdrop-blur-sm">
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-zinc-900 border border-white/10 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
+          className="bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
         >
-          <div className="p-6 border-b border-white/5 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <div className="p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
               <Server className="w-5 h-5 text-emerald-500" />
               Settings
             </h2>
             <button 
               onClick={onClose}
-              className="p-2 hover:bg-white/5 rounded-full text-zinc-400 hover:text-white transition-colors"
+              className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -226,7 +226,7 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                   placeholder="30"
                   min="1"
                   max="1440"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
               <div>
@@ -236,12 +236,12 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                   value={settings.manualCallsigns}
                   onChange={e => setSettings({...settings, manualCallsigns: e.target.value})}
                   placeholder="e.g. PJ2/K8ND, 3B8/G0XYZ"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
-                <label htmlFor="hideConfirmed" className="text-sm font-medium text-zinc-300 cursor-pointer select-none">
+              <div className="flex items-center justify-between p-3 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5">
+                <label htmlFor="hideConfirmed" className="text-sm font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer select-none">
                   Hide confirmed bands/modes from tiles
                 </label>
                 <button
@@ -249,7 +249,7 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                   id="hideConfirmed"
                   onClick={() => setSettings({...settings, hideConfirmed: !settings.hideConfirmed})}
                   className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
-                    settings.hideConfirmed ? 'bg-emerald-500' : 'bg-zinc-700'
+                    settings.hideConfirmed ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'
                   }`}
                 >
                   <motion.span
@@ -259,8 +259,8 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                 </button>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
-                <label htmlFor="onlyMyContinent" className="text-sm font-medium text-zinc-300 cursor-pointer select-none">
+              <div className="flex items-center justify-between p-3 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5">
+                <label htmlFor="onlyMyContinent" className="text-sm font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer select-none">
                   Show spots from my continent only
                 </label>
                 <button
@@ -268,7 +268,7 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                   id="onlyMyContinent"
                   onClick={() => setSettings({...settings, onlyMyContinent: !settings.onlyMyContinent})}
                   className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
-                    settings.onlyMyContinent ? 'bg-emerald-500' : 'bg-zinc-700'
+                    settings.onlyMyContinent ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'
                   }`}
                 >
                   <motion.span
@@ -297,7 +297,7 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                       className={`py-2 rounded-xl text-xs font-bold uppercase tracking-widest border transition-all ${
                         settings.aiProvider === provider
                           ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-                          : 'bg-white/5 text-zinc-500 border-white/10 hover:bg-white/10'
+                          : 'bg-black/5 dark:bg-white/5 text-zinc-500 border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10'
                       }`}
                     >
                       {provider === 'gemini' ? 'Gemini' : 'DeepSeek'}
@@ -315,7 +315,7 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                       value={settings.geminiApiKey}
                       onChange={e => setSettings({...settings, geminiApiKey: e.target.value})}
                       placeholder="Enter your Gemini API Key"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 pl-10 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                      className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2 pl-10 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors"
                     />
                     <Key className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   </div>
@@ -332,7 +332,7 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                       value={settings.deepseekApiKey}
                       onChange={e => setSettings({...settings, deepseekApiKey: e.target.value})}
                       placeholder="Enter your DeepSeek API Key"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 pl-10 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                      className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2 pl-10 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors"
                     />
                     <Key className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   </div>
@@ -342,9 +342,9 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                 </div>
               )}
 
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+              <div className="flex items-center justify-between p-3 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5">
                 <div className="flex-1 pr-4">
-                  <label htmlFor="disableBackgroundAI" className="text-sm font-medium text-zinc-300 cursor-pointer select-none block">
+                  <label htmlFor="disableBackgroundAI" className="text-sm font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer select-none block">
                     Disable Background Analysis
                   </label>
                   <p className="text-[9px] text-zinc-500 mt-0.5">
@@ -356,7 +356,7 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                   id="disableBackgroundAI"
                   onClick={() => setSettings({...settings, disableBackgroundAI: !settings.disableBackgroundAI})}
                   className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none shrink-0 ${
-                    settings.disableBackgroundAI ? 'bg-blue-500' : 'bg-zinc-700'
+                    settings.disableBackgroundAI ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'
                   }`}
                 >
                   <motion.span
@@ -373,7 +373,7 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                 <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 flex items-center gap-2">
                   <Globe className="w-3 h-3" /> Club Log
                 </h3>
-                <span className="text-[10px] font-bold text-emerald-500/50 uppercase tracking-tighter">Local Storage</span>
+                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-500/50 uppercase tracking-tighter">Local Storage</span>
               </div>
               <div className="space-y-3">
                 <div>
@@ -383,7 +383,7 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                     value={settings.myCallsign}
                     onChange={e => setSettings({...settings, myCallsign: e.target.value.toUpperCase()})}
                     placeholder="e.g. OK1CDJ"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                   />
                 </div>
                 <div>
@@ -393,7 +393,7 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                     value={settings.clublogEmail}
                     onChange={e => setSettings({...settings, clublogEmail: e.target.value})}
                     placeholder="Enter your Club Log email"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                   />
                 </div>
                 <div>
@@ -404,7 +404,7 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                       value={settings.clublogPassword}
                       onChange={e => setSettings({...settings, clublogPassword: e.target.value})}
                       placeholder="Enter your Club Log password"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 pl-10 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                      className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2 pl-10 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                     />
                     <Key className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   </div>
@@ -417,19 +417,19 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                       value={testCallsign}
                       onChange={(e) => setTestCallsign(e.target.value.toUpperCase())}
                       placeholder="Test Callsign (e.g. XX9W)"
-                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/50 transition-colors font-mono"
+                      className="flex-1 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500/50 transition-colors font-mono"
                     />
                     <button
                       onClick={handleTestCallsign}
                       disabled={isTestingCallsign || !testCallsign}
-                      className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 rounded-xl text-[10px] font-bold uppercase tracking-widest text-white transition-all border border-white/10"
+                      className="px-4 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-50 rounded-xl text-[10px] font-bold uppercase tracking-widest text-zinc-900 dark:text-white transition-all border border-black/10 dark:border-white/10"
                     >
                       {isTestingCallsign ? '...' : 'Test'}
                     </button>
                   </div>
 
                   {testResult && (
-                    <div className="p-3 bg-black/40 rounded-xl border border-white/5 font-mono text-[9px] overflow-auto max-h-[150px] text-zinc-400">
+                    <div className="p-3 bg-zinc-100 dark:bg-black/40 rounded-xl border border-black/5 dark:border-white/5 font-mono text-[9px] overflow-auto max-h-[150px] text-zinc-600 dark:text-zinc-400">
                       <pre>{JSON.stringify(testResult, null, 2)}</pre>
                     </div>
                   )}
@@ -438,10 +438,10 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                     onClick={handleTestConnection}
                     disabled={testStatus === 'loading'}
                     className={`w-full py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                      testStatus === 'loading' ? 'bg-white/5 text-zinc-500 cursor-not-allowed' :
+                      testStatus === 'loading' ? 'bg-black/5 dark:bg-white/5 text-zinc-500 cursor-not-allowed' :
                       testStatus === 'success' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
                       testStatus === 'error' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' :
-                      'bg-white/5 text-zinc-300 hover:bg-white/10 border border-white/10'
+                      'bg-black/5 dark:bg-white/5 text-zinc-700 dark:text-zinc-300 hover:bg-black/10 dark:hover:bg-white/10 border border-black/10 dark:border-white/10'
                     }`}
                   >
                     {testStatus === 'loading' ? <Loader2 className="w-3 h-3 animate-spin" /> :
@@ -453,7 +453,7 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                   
                   {testStatus !== 'idle' && testStatus !== 'loading' && (
                     <p className={`mt-2 text-[10px] text-center ${
-                      testStatus === 'success' ? 'text-emerald-500/70' : 'text-rose-500/70'
+                      testStatus === 'success' ? 'text-emerald-700 dark:text-emerald-500/70' : 'text-rose-700 dark:text-rose-500/70'
                     }`}>
                       {testStatus === 'success' ? 'Your credentials are valid.' : testMessage}
                     </p>
@@ -463,14 +463,14 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
             </div>
 
             {/* Export & Import Settings */}
-            <div className="space-y-4 pt-2 border-t border-white/5">
+            <div className="space-y-4 pt-2 border-t border-black/5 dark:border-white/5">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 flex items-center gap-2">
                   <FileKey className="w-3 h-3 text-emerald-500" /> Export & Import
                 </h3>
               </div>
               <div>
-                <p className="text-[10px] text-zinc-400 mb-2 leading-relaxed">
+                <p className="text-[10px] text-zinc-600 dark:text-zinc-400 mb-2 leading-relaxed">
                   Backup your settings to a secure file, or restore them on another device. The file is AES encrypted with the password you provide below.
                 </p>
                 <div className="relative mb-3">
@@ -482,7 +482,7 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                       setCryptoStatus('');
                     }}
                     placeholder="Enter encryption password"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 pl-10 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2 pl-10 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                   />
                   <Key className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 </div>
@@ -490,12 +490,12 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                 <div className="flex gap-2">
                   <button
                     onClick={handleExport}
-                    className="flex-1 py-2 px-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all text-zinc-300"
+                    className="flex-1 py-2 px-3 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-black/10 dark:border-white/10 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all text-zinc-700 dark:text-zinc-300"
                   >
                     <Download className="w-3.5 h-3.5" />
                     Export
                   </button>
-                  <label className="flex-1 py-2 px-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all text-zinc-300 cursor-pointer">
+                  <label className="flex-1 py-2 px-3 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-black/10 dark:border-white/10 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all text-zinc-700 dark:text-zinc-300 cursor-pointer">
                     <Upload className="w-3.5 h-3.5" />
                     Import
                     <input 
@@ -509,7 +509,7 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                 </div>
                 {cryptoStatus && (
                   <p className={`mt-2 text-[10px] text-center ${
-                    cryptoStatus === 'success' ? 'text-emerald-500/70' : 'text-rose-500/70'
+                    cryptoStatus === 'success' ? 'text-emerald-700 dark:text-emerald-500/70' : 'text-rose-700 dark:text-rose-500/70'
                   }`}>
                     {cryptoMessage}
                   </p>
@@ -519,10 +519,10 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
 
           </div>
 
-          <div className="p-6 border-t border-white/5 bg-white/5 flex gap-3">
+          <div className="p-6 border-t border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5 flex gap-3">
             <button 
               onClick={onClose}
-              className="flex-1 px-4 py-2 rounded-xl border border-white/10 text-sm font-bold text-zinc-400 hover:bg-white/5 transition-colors"
+              className="flex-1 px-4 py-2 rounded-xl border border-black/10 dark:border-white/10 text-sm font-bold text-zinc-600 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
             >
               Cancel
             </button>

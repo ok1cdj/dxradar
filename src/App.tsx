@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { 
-  Radio, 
-  Settings, 
+import {
+  Radio,
+  Settings,
   AlertCircle,
   Zap,
   Globe,
   RefreshCw,
-  HelpCircle
+  HelpCircle,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Expedition } from './types';
+import { getTheme, setTheme, Theme } from './theme';
 import SettingsModal, { Settings as AppSettings } from './components/SettingsModal';
 import HelpModal from './components/HelpModal';
 import ClusterStatusBar from './components/ClusterStatusBar';
@@ -142,6 +145,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [theme, setThemeState] = useState<Theme>(getTheme());
   const [isExpeditionsModalOpen, setIsExpeditionsModalOpen] = useState(false);
   const [lastClubLogCheck, setLastClubLogCheck] = useState<{ [key: string]: number }>({});
   const [clusterStatus, setClusterStatus] = useState<'Connected' | 'Connecting' | 'Disconnected'>('Disconnected');
@@ -611,7 +615,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-50 dark:bg-[#0a0a0a] text-zinc-900 dark:text-white flex items-center justify-center">
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
@@ -623,42 +627,49 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-zinc-300 font-sans selection:bg-emerald-500/30">
+    <div className="min-h-screen bg-zinc-50 dark:bg-[#0a0a0a] text-zinc-700 dark:text-zinc-300 font-sans selection:bg-emerald-500/30">
       <GlobalPropagationBar />
       {/* Header */}
-      <header className="border-b border-white/5 bg-black/50 backdrop-blur-md sticky top-0 z-50">
+      <header className="border-b border-black/10 dark:border-white/5 bg-white/70 dark:bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="w-full px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
               <Radio className="w-5 h-5 text-black" />
             </div>
-            <h1 className="text-xl font-black text-white tracking-tighter uppercase italic">DX Radar</h1>
+            <h1 className="text-xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase italic">DX Radar</h1>
           </div>
           <div className="flex items-center gap-4">
-            <button 
+            <button
+              onClick={() => { const t: Theme = theme === 'dark' ? 'light' : 'dark'; setThemeState(t); setTheme(t); }}
+              className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+            <button
               onClick={() => setIsHelpOpen(true)}
-              className="p-2 hover:bg-white/5 rounded-full transition-colors text-zinc-500 hover:text-white"
+              className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
               title="Help & Info"
             >
               <HelpCircle className="w-5 h-5" />
             </button>
             <button 
               onClick={() => setIsExpeditionsModalOpen(true)}
-              className="p-2 hover:bg-white/5 rounded-full transition-colors text-zinc-500 hover:text-white"
+              className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
               title="All Expeditions"
             >
               <Globe className="w-5 h-5" />
             </button>
             <button 
               onClick={fetchExpeditions}
-              className="p-2 hover:bg-white/5 rounded-full transition-colors text-zinc-500 hover:text-white"
+              className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
               title="Refresh Expeditions"
             >
               <RefreshCw className="w-5 h-5" />
             </button>
             <button 
               onClick={() => setIsSettingsOpen(true)}
-              className="p-2 hover:bg-white/5 rounded-full transition-colors text-zinc-500 hover:text-white"
+              className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
               title="Settings"
             >
               <Settings className="w-5 h-5" />
@@ -693,7 +704,7 @@ export default function App() {
 
       <main className="w-full px-6 py-12 pb-32">
         {error && (
-          <div className="w-full mb-8 bg-amber-500/10 border border-amber-500/50 p-4 rounded-2xl flex items-center gap-3 text-amber-200">
+          <div className="w-full mb-8 bg-amber-500/10 border border-amber-500/50 p-4 rounded-2xl flex items-center gap-3 text-amber-700 dark:text-amber-200">
             <AlertCircle className="w-5 h-5" />
             <p className="text-sm font-medium">{error}</p>
           </div>
@@ -771,7 +782,7 @@ export default function App() {
         />
 
         {Object.keys(activeExpeditionsData).length === 0 && !loading && (
-          <div className="text-center py-32 text-zinc-600">
+          <div className="text-center py-32 text-zinc-400 dark:text-zinc-600">
             <Radio className="w-16 h-16 mx-auto mb-4 opacity-10" />
             <p className="text-lg font-medium">No live expedition spots detected</p>
             <p className="text-sm opacity-50">Waiting for DX Cluster data...</p>

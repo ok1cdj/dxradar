@@ -63,28 +63,28 @@ export default function DXClusterSpots({ filterCallsign, filterCallsigns }: DXCl
               <Wifi className="w-3 h-3" /> LIVE
             </span>
           ) : (
-            <span className="flex items-center gap-1 text-[10px] text-zinc-600 font-bold ml-2">
+            <span className="flex items-center gap-1 text-[10px] text-zinc-400 dark:text-zinc-600 font-bold ml-2">
               <WifiOff className="w-3 h-3" /> OFFLINE
             </span>
           )}
         </h3>
         {filterCallsign && (
-          <div className="text-[10px] font-bold uppercase text-emerald-500/70 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+          <div className="text-[10px] font-bold uppercase text-emerald-700 dark:text-emerald-500/70 bg-emerald-500/10 px-2 py-0.5 rounded-full">
             Filtering: {filterCallsign}
           </div>
         )}
         {!filterCallsign && filterCallsigns && filterCallsigns.length > 0 && (
-          <div className="text-[10px] font-bold uppercase text-emerald-500/70 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+          <div className="text-[10px] font-bold uppercase text-emerald-700 dark:text-emerald-500/70 bg-emerald-500/10 px-2 py-0.5 rounded-full">
             Filtering: Expeditions Only
           </div>
         )}
       </div>
 
-      <div className="bg-white/5 border border-white/5 rounded-3xl overflow-hidden">
+      <div className="bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 rounded-3xl overflow-hidden">
         <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
-            <thead className="sticky top-0 bg-zinc-900/90 backdrop-blur-sm z-10">
-              <tr className="border-b border-white/5">
+            <thead className="sticky top-0 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm z-10">
+              <tr className="border-b border-black/5 dark:border-white/5">
                 <th className="p-4 text-xs font-bold uppercase text-zinc-500">DX</th>
                 <th className="p-4 text-xs font-bold uppercase text-zinc-500">Freq</th>
                 <th className="p-4 text-xs font-bold uppercase text-zinc-500">Mode</th>
@@ -101,15 +101,15 @@ export default function DXClusterSpots({ filterCallsign, filterCallsigns }: DXCl
                       key={spot.id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors group"
+                      className="border-b border-black/5 dark:border-white/5 last:border-0 hover:bg-black/5 dark:hover:bg-white/5 transition-colors group"
                     >
                       <td className="p-4">
-                        <span className="font-mono font-black text-white text-lg tracking-tighter group-hover:text-emerald-400 transition-colors">
+                        <span className="font-mono font-black text-zinc-900 dark:text-white text-lg tracking-tighter group-hover:text-emerald-400 transition-colors">
                           {spot.dxCall}
                         </span>
                       </td>
                       <td className="p-4">
-                        <span className="font-mono text-zinc-400">{spot.freq}</span>
+                        <span className="font-mono text-zinc-600 dark:text-zinc-400">{spot.freq}</span>
                       </td>
                       <td className="p-4">
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
@@ -137,7 +137,7 @@ export default function DXClusterSpots({ filterCallsign, filterCallsigns }: DXCl
                         </span>
                       </td>
                       <td className="p-4 text-right">
-                        <div className="flex items-center justify-end gap-1 text-xs text-zinc-600">
+                        <div className="flex items-center justify-end gap-1 text-xs text-zinc-400 dark:text-zinc-600">
                           <Clock className="w-3 h-3" />
                           {spot.time}
                         </div>
@@ -146,7 +146,7 @@ export default function DXClusterSpots({ filterCallsign, filterCallsigns }: DXCl
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="p-12 text-center text-zinc-600 italic text-sm">
+                    <td colSpan={6} className="p-12 text-center text-zinc-400 dark:text-zinc-600 italic text-sm">
                       Waiting for spots...
                     </td>
                   </tr>

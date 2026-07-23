@@ -84,20 +84,20 @@ export default function SpotsModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-zinc-900/40 dark:bg-black/80 backdrop-blur-sm"
           />
           
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-3xl bg-zinc-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+            className="relative w-full max-w-3xl bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
           >
             {/* Header */}
-            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-zinc-900/50">
+            <div className="p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between bg-white dark:bg-zinc-900/50">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-2xl font-black text-white tracking-tighter uppercase italic">{callsign}</h2>
+                  <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase italic">{callsign}</h2>
                   <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold rounded uppercase tracking-wider border border-emerald-500/20">
                     Last 10 Spots
                   </div>
@@ -108,7 +108,7 @@ export default function SpotsModal({
               </div>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-white/5 rounded-full transition-colors text-zinc-500 hover:text-white"
+                className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -116,7 +116,7 @@ export default function SpotsModal({
 
             {/* AI Summary Section */}
             {spots.length > 0 && (
-              <div className="px-6 py-4 bg-zinc-800/50 border-b border-white/5">
+              <div className="px-6 py-4 bg-zinc-100 dark:bg-zinc-800/50 border-b border-black/5 dark:border-white/5">
                 {!cachedAnalysis && !isAnalyzing ? (
                   <div className="flex items-center gap-3">
                     <button
@@ -125,14 +125,14 @@ export default function SpotsModal({
                       className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl border transition-all group ${
                         aiApiKey
                           ? 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border-blue-500/20'
-                          : 'bg-zinc-500/5 text-zinc-600 border-white/5 cursor-not-allowed'
+                          : 'bg-zinc-500/5 text-zinc-400 dark:text-zinc-600 border-black/5 dark:border-white/5 cursor-not-allowed'
                       }`}
                     >
                       <Sparkles className={`w-4 h-4 ${aiApiKey ? 'group-hover:rotate-12 transition-transform' : ''}`} />
                       Analyze with {providerLabel} AI
                     </button>
                     {!aiApiKey && (
-                      <span className="text-[10px] text-zinc-600 font-medium italic">
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-600 font-medium italic">
                         Set {providerLabel} API Key in Settings to enable
                       </span>
                     )}
@@ -166,11 +166,11 @@ export default function SpotsModal({
                         Refresh
                       </button>
                     </div>
-                    <div className="text-xs text-zinc-300 leading-relaxed max-w-none">
+                    <div className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed max-w-none">
                       <Markdown components={{
                         strong: ({node, ...props}) => <span className="font-black text-blue-400" {...props} />,
                         ul: ({node, ...props}) => <ul className="list-disc ml-4 space-y-1" {...props} />,
-                        li: ({node, ...props}) => <li className="marker:text-blue-500/50" {...props} />
+                        li: ({node, ...props}) => <li className="marker:text-blue-600 dark:marker:text-blue-500/50" {...props} />
                       }}>
                         {cachedAnalysis.summary}
                       </Markdown>
@@ -185,7 +185,7 @@ export default function SpotsModal({
               {spots.length > 0 ? (
                 <div className="space-y-1 min-w-[500px] sm:min-w-0">
                   {/* Header Row */}
-                  <div className="grid grid-cols-[80px_100px_1fr_70px_30px] sm:grid-cols-[100px_120px_1fr_80px_40px] gap-2 sm:gap-4 px-4 py-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-white/5">
+                  <div className="grid grid-cols-[80px_100px_1fr_70px_30px] sm:grid-cols-[100px_120px_1fr_80px_40px] gap-2 sm:gap-4 px-4 py-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-black/5 dark:border-white/5">
                     <div>Frequency</div>
                     <div>Spotter</div>
                     <div>Comment</div>
@@ -199,10 +199,10 @@ export default function SpotsModal({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.03 }}
                       key={spot.id}
-                      className="grid grid-cols-[80px_100px_1fr_70px_30px] sm:grid-cols-[100px_120px_1fr_80px_40px] gap-2 sm:gap-4 px-4 py-2.5 items-center hover:bg-white/5 rounded-xl transition-colors group"
+                      className="grid grid-cols-[80px_100px_1fr_70px_30px] sm:grid-cols-[100px_120px_1fr_80px_40px] gap-2 sm:gap-4 px-4 py-2.5 items-center hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors group"
                     >
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-mono font-bold text-white">{spot.freq}</span>
+                        <span className="text-sm font-mono font-bold text-zinc-900 dark:text-white">{spot.freq}</span>
                         <span className={`text-[9px] font-black px-1 rounded uppercase ${
                           spot.mode === 'FT8' ? 'text-purple-400' :
                           spot.mode === 'CW' ? 'text-blue-400' :
@@ -212,9 +212,9 @@ export default function SpotsModal({
                         </span>
                       </div>
                       
-                      <div className="text-xs text-zinc-400 font-medium">
+                      <div className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
                         <span className="opacity-40 mr-1 text-[10px]">by</span>
-                        <span className="text-zinc-200 font-bold group-hover:text-emerald-400 transition-colors">{spot.spotter}</span>
+                        <span className="text-zinc-800 dark:text-zinc-200 font-bold group-hover:text-emerald-400 transition-colors">{spot.spotter}</span>
                       </div>
 
                       <div className="text-xs text-zinc-500 font-medium truncate italic" title={spot.comment}>
@@ -228,7 +228,7 @@ export default function SpotsModal({
                       <div className="flex justify-center">
                         {spot.isSkimmer ? (
                           <span title="RBN Spot">
-                            <Zap className="w-3 h-3 text-purple-500/50" />
+                            <Zap className="w-3 h-3 text-purple-600 dark:text-purple-500/50" />
                           </span>
                         ) : (
                           <div className="w-3 h-3" />
@@ -238,15 +238,15 @@ export default function SpotsModal({
                   ))}
                 </div>
               ) : (
-                <div className="py-20 text-center text-zinc-600">
+                <div className="py-20 text-center text-zinc-400 dark:text-zinc-600">
                   <p className="text-sm font-medium">No spots found for this combination</p>
                 </div>
               )}
             </div>
             
             {/* Footer */}
-            <div className="p-4 bg-black/20 border-t border-white/5 text-center">
-              <p className="text-[10px] text-zinc-600 font-medium uppercase tracking-widest">
+            <div className="p-4 bg-black/5 dark:bg-black/20 border-t border-black/5 dark:border-white/5 text-center">
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-600 font-medium uppercase tracking-widest">
                 Real-time DX Cluster Data
               </p>
             </div>

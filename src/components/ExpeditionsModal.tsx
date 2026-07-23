@@ -20,22 +20,22 @@ export default function ExpeditionsModal({ isOpen, onClose, expeditions }: Exped
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-zinc-900/40 dark:bg-black/80 backdrop-blur-sm"
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-3xl bg-[#121212] border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]"
+            className="relative w-full max-w-3xl bg-white dark:bg-[#121212] border border-black/10 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]"
           >
-            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
+            <div className="p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between bg-black/5 dark:bg-white/5">
               <div className="flex items-center gap-3">
                 <Globe className="w-6 h-6 text-emerald-500" />
-                <h2 className="text-xl font-bold text-white tracking-tight">Active & Upcoming Expeditions</h2>
+                <h2 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">Active & Upcoming Expeditions</h2>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors text-zinc-400 hover:text-white"
+                className="p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -54,12 +54,12 @@ export default function ExpeditionsModal({ isOpen, onClose, expeditions }: Exped
                     return (
                       <div 
                         key={exp.id}
-                        className="group p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 hover:border-white/10 transition-all"
+                        className="group p-4 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 rounded-2xl hover:bg-black/10 dark:hover:bg-white/10 hover:border-black/10 dark:hover:border-white/10 transition-all"
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3 mb-1">
-                              <h3 className="text-lg font-bold text-white font-mono tracking-tight group-hover:text-emerald-400 transition-colors">
+                              <h3 className="text-lg font-bold text-zinc-900 dark:text-white font-mono tracking-tight group-hover:text-emerald-400 transition-colors">
                                 {exp.callsign}
                               </h3>
                               {urgency !== 'none' && (
@@ -69,7 +69,7 @@ export default function ExpeditionsModal({ isOpen, onClose, expeditions }: Exped
                                   className="text-amber-500"
                                   title={urgency === 'last-day' ? "Last day!" : "Last 2 days!"}
                                 >
-                                  <AlertCircle className="w-4 h-4 fill-current bg-black rounded-full" />
+                                  <AlertCircle className="w-4 h-4 fill-current bg-white dark:bg-black rounded-full" />
                                 </motion.div>
                               )}
                               <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border ${
@@ -80,7 +80,7 @@ export default function ExpeditionsModal({ isOpen, onClose, expeditions }: Exped
                                 {exp.status}
                               </span>
                             </div>
-                            <div className="flex flex-wrap gap-y-1 gap-x-4 text-sm text-zinc-400">
+                            <div className="flex flex-wrap gap-y-1 gap-x-4 text-sm text-zinc-600 dark:text-zinc-400">
                             <div className="flex items-center gap-1.5">
                               <Globe className="w-3.5 h-3.5 text-zinc-500" />
                               <span className="truncate">{exp.location}</span>
@@ -91,7 +91,7 @@ export default function ExpeditionsModal({ isOpen, onClose, expeditions }: Exped
                             </div>
                             {exp.source && (
                               <div className="flex items-center gap-1.5">
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-zinc-800 text-zinc-400 border border-zinc-700">
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-700">
                                   {exp.source}
                                 </span>
                               </div>
@@ -105,7 +105,7 @@ export default function ExpeditionsModal({ isOpen, onClose, expeditions }: Exped
                               href={exp.websiteUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-2 bg-white/5 hover:bg-emerald-500/20 text-zinc-400 hover:text-emerald-400 rounded-xl transition-all border border-white/5 hover:border-emerald-500/30"
+                              className="p-2 bg-black/5 dark:bg-white/5 hover:bg-emerald-500/20 text-zinc-600 dark:text-zinc-400 hover:text-emerald-400 rounded-xl transition-all border border-black/5 dark:border-white/5 hover:border-emerald-500/30"
                               title="Expedition Website"
                             >
                               <Globe className="w-4 h-4" />
@@ -115,7 +115,7 @@ export default function ExpeditionsModal({ isOpen, onClose, expeditions }: Exped
                             href={`https://www.qrz.com/db/${exp.callsign}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 bg-white/5 hover:bg-blue-500/20 text-zinc-400 hover:text-blue-400 rounded-xl transition-all border border-white/5 hover:border-blue-500/30"
+                            className="p-2 bg-black/5 dark:bg-white/5 hover:bg-blue-500/20 text-zinc-600 dark:text-zinc-400 hover:text-blue-400 rounded-xl transition-all border border-black/5 dark:border-white/5 hover:border-blue-500/30"
                             title="View on QRZ.com"
                           >
                             <ExternalLink className="w-4 h-4" />
@@ -141,7 +141,7 @@ export default function ExpeditionsModal({ isOpen, onClose, expeditions }: Exped
                             const isActive = cellEndDate >= start && cellDate <= end;
                             
                             if (!isActive) {
-                              return <div key={i} className="flex-1 bg-white/5 rounded-full" />;
+                              return <div key={i} className="flex-1 bg-black/5 dark:bg-white/5 rounded-full" />;
                             }
                             
                             if (d < today) {
@@ -164,10 +164,10 @@ export default function ExpeditionsModal({ isOpen, onClose, expeditions }: Exped
               </div>
             </div>
 
-            <div className="p-4 bg-white/5 border-t border-white/5 flex items-center justify-between text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+            <div className="p-4 bg-black/5 dark:bg-white/5 border-t border-black/5 dark:border-white/5 flex items-center justify-between text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
               <span>Total: {expeditions.length} expeditions</span>
               <span className="flex items-center gap-1">
-                Data from <span className="text-zinc-400">NG3K & DXWorld</span>
+                Data from <span className="text-zinc-600 dark:text-zinc-400">NG3K & DXWorld</span>
               </span>
             </div>
           </motion.div>

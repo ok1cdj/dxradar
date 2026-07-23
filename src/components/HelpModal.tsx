@@ -22,22 +22,22 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-zinc-900/40 dark:bg-black/80 backdrop-blur-sm"
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-2xl bg-[#121212] border border-white/10 rounded-3xl overflow-hidden shadow-2xl"
+            className="relative w-full max-w-2xl bg-white dark:bg-[#121212] border border-black/10 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl"
           >
-            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
+            <div className="p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between bg-black/5 dark:bg-white/5">
               <div className="flex items-center gap-3">
                 <HelpCircle className="w-6 h-6 text-emerald-500" />
-                <h2 className="text-xl font-bold text-white tracking-tight">About DX Radar</h2>
+                <h2 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">About DX Radar</h2>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors text-zinc-400 hover:text-white"
+                className="p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -46,7 +46,7 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
             <div className="p-8 overflow-y-auto max-h-[70vh] space-y-8 custom-scrollbar">
               <section className="space-y-3">
                 <h3 className="text-emerald-500 font-bold uppercase tracking-wider text-xs">Description</h3>
-                <p className="text-zinc-300 leading-relaxed">
+                <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed">
                   DX Radar is a real-time dashboard for radio amateurs to track active DX expeditions and manual callsigns. 
                   It integrates live spots from DX Cluster and RBN with your Club Log data to show what you've worked and what you still need.
                 </p>
@@ -54,10 +54,10 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
 
               <section className="space-y-3">
                 <h3 className="text-emerald-500 font-bold uppercase tracking-wider text-xs">Data Sources & Credits</h3>
-                <p className="text-zinc-300 text-sm leading-relaxed">
+                <p className="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed">
                   Expedition schedules are aggregated from two excellent community resources:
                 </p>
-                <ul className="space-y-2 text-sm text-zinc-400">
+                <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
                   <li className="flex items-start gap-2">
                     <Globe className="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" />
                     <span><a href="http://www.ng3k.com/adxo.xml" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">NG3K Amateur Radio Exigencies</a> - The classic and highly reliable ADXO bulletin.</span>
@@ -74,13 +74,13 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                 <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl space-y-3">
                   <div className="flex gap-3">
                     <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
-                    <p className="text-sm text-zinc-300">
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300">
                       <strong>Local Storage:</strong> All your passwords, API keys, and settings are stored <strong>only in your browser</strong>. They are never saved on our server.
                     </p>
                   </div>
                   <div className="flex gap-3">
                     <Settings className="w-5 h-5 text-emerald-500 shrink-0" />
-                    <p className="text-sm text-zinc-300">
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300">
                       <strong>Club Log Password:</strong> Do not use your main account password. You must use an <strong>Application Password</strong> generated in your Club Log settings.
                     </p>
                   </div>
@@ -90,51 +90,51 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
               <section className="space-y-4">
                 <h3 className="text-emerald-500 font-bold uppercase tracking-wider text-xs">Key Features</h3>
                 <div className="grid gap-4">
-                  <div className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                  <div className="flex gap-4 p-4 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5">
                     <Sparkles className="w-6 h-6 text-blue-400 shrink-0" />
                     <div>
-                      <h4 className="text-white font-bold mb-1">AI Spot Analysis</h4>
-                      <p className="text-sm text-zinc-400">Intelligent background analysis of DX spots using Gemini or DeepSeek AI (your choice in Settings). It automatically identifies split frequency, signal strength, and operator behavior before you even click.</p>
+                      <h4 className="text-zinc-900 dark:text-white font-bold mb-1">AI Spot Analysis</h4>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400">Intelligent background analysis of DX spots using Gemini or DeepSeek AI (your choice in Settings). It automatically identifies split frequency, signal strength, and operator behavior before you even click.</p>
                     </div>
                   </div>
 
-                  <div className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                  <div className="flex gap-4 p-4 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5">
                     <Settings className="w-6 h-6 text-zinc-400 shrink-0" />
                     <div>
-                      <h4 className="text-white font-bold mb-1">Configure Club Log</h4>
-                      <p className="text-sm text-zinc-400">Enter your credentials to enable worked/confirmed status tracking. Requires an Application Password.</p>
+                      <h4 className="text-zinc-900 dark:text-white font-bold mb-1">Configure Club Log</h4>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400">Enter your credentials to enable worked/confirmed status tracking. Requires an Application Password.</p>
                     </div>
                   </div>
 
-                  <div className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                  <div className="flex gap-4 p-4 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5">
                     <Zap className="w-6 h-6 text-zinc-400 shrink-0" />
                     <div>
-                      <h4 className="text-white font-bold mb-1">Add Manual Callsigns</h4>
-                      <p className="text-sm text-zinc-400">You can add specific callsigns to track in the Settings (comma-separated).</p>
+                      <h4 className="text-zinc-900 dark:text-white font-bold mb-1">Add Manual Callsigns</h4>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400">You can add specific callsigns to track in the Settings (comma-separated).</p>
                     </div>
                   </div>
 
-                  <div className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                  <div className="flex gap-4 p-4 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5">
                     <Globe className="w-6 h-6 text-zinc-400 shrink-0" />
                     <div>
-                      <h4 className="text-white font-bold mb-1">Monitor Spots</h4>
-                      <p className="text-sm text-zinc-400">The dashboard automatically shows active expeditions with live spots from the cluster.</p>
+                      <h4 className="text-zinc-900 dark:text-white font-bold mb-1">Monitor Spots</h4>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400">The dashboard automatically shows active expeditions with live spots from the cluster.</p>
                     </div>
                   </div>
 
-                  <div className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                  <div className="flex gap-4 p-4 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5">
                     <Calendar className="w-6 h-6 text-blue-400 shrink-0" />
                     <div>
-                      <h4 className="text-white font-bold mb-1">Upcoming Expeditions</h4>
-                      <p className="text-sm text-zinc-400">The expedition list (globe icon) also shows stations starting within the next 14 days, marked with a blue "Upcoming" badge.</p>
+                      <h4 className="text-zinc-900 dark:text-white font-bold mb-1">Upcoming Expeditions</h4>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400">The expedition list (globe icon) also shows stations starting within the next 14 days, marked with a blue "Upcoming" badge.</p>
                     </div>
                   </div>
 
-                  <div className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                  <div className="flex gap-4 p-4 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5">
                     <ShieldCheck className="w-6 h-6 text-emerald-400 shrink-0" />
                     <div>
-                      <h4 className="text-white font-bold mb-1">Export & Import Settings</h4>
-                      <p className="text-sm text-zinc-400">Securely backup and restore your settings across devices. Your export file is encrypted with AES using a password you provide.</p>
+                      <h4 className="text-zinc-900 dark:text-white font-bold mb-1">Export & Import Settings</h4>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400">Securely backup and restore your settings across devices. Your export file is encrypted with AES using a password you provide.</p>
                     </div>
                   </div>
                 </div>
@@ -146,15 +146,15 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                   <div className="flex items-start gap-3 p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl">
                     <AlertCircle className="w-6 h-6 text-amber-500 shrink-0" />
                     <div>
-                      <h4 className="text-white text-sm font-bold mb-1">Ending Soon</h4>
-                      <p className="text-xs text-zinc-400">An orange icon appears when an expedition is in its last 2 days. If it's the <strong>last day</strong>, the icon will blink to alert you.</p>
+                      <h4 className="text-zinc-900 dark:text-white text-sm font-bold mb-1">Ending Soon</h4>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400">An orange icon appears when an expedition is in its last 2 days. If it's the <strong>last day</strong>, the icon will blink to alert you.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
                     <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
                     <div>
-                      <h4 className="text-white text-sm font-bold mb-1">QSO Status</h4>
-                      <p className="text-xs text-zinc-400">Colors indicate your progress: Green for confirmed, Amber for worked, and Grey for needed slots.</p>
+                      <h4 className="text-zinc-900 dark:text-white text-sm font-bold mb-1">QSO Status</h4>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400">Colors indicate your progress: Green for confirmed, Amber for worked, and Grey for needed slots.</p>
                     </div>
                   </div>
                 </div>
@@ -165,22 +165,22 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
                     <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                    <span className="text-sm font-medium text-emerald-200">Confirmed</span>
+                    <span className="text-sm font-medium text-emerald-700 dark:text-emerald-200">Confirmed</span>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
                     <Circle className="w-5 h-5 text-amber-500 fill-amber-500/20" />
-                    <span className="text-sm font-medium text-amber-200">Worked</span>
+                    <span className="text-sm font-medium text-amber-700 dark:text-amber-200">Worked</span>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-zinc-500/10 border border-zinc-500/20 rounded-xl">
                     <Circle className="w-5 h-5 text-zinc-500" />
-                    <span className="text-sm font-medium text-zinc-400">Needed</span>
+                    <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Needed</span>
                   </div>
                 </div>
               </section>
 
               <section className="space-y-3">
                 <h3 className="text-emerald-500 font-bold uppercase tracking-wider text-xs">Interactions</h3>
-                <ul className="space-y-2 text-sm text-zinc-400">
+                <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
                   <li className="flex gap-2">
                     <span className="text-emerald-500 font-bold">•</span>
                     <span>Click on a <strong>Band/Mode slot</strong> to see the most recent spots for that specific combination.</span>
@@ -196,9 +196,9 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                 </ul>
               </section>
 
-              <section className="space-y-4 pt-4 border-t border-white/5">
+              <section className="space-y-4 pt-4 border-t border-black/5 dark:border-white/5">
                 <h3 className="text-emerald-500 font-bold uppercase tracking-wider text-xs">Feedback & Issues</h3>
-                <p className="text-zinc-300 text-sm leading-relaxed">
+                <p className="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed">
                   Found a bug or have a suggestion? Please report it on GitHub or reach out via email.
                 </p>
                 <div className="flex flex-wrap gap-4">
@@ -206,14 +206,14 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                     href="https://github.com/ok1cdj/dxradar/issues" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl transition-colors text-zinc-300 hover:text-white text-sm"
+                    className="flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-black/5 dark:border-white/5 rounded-xl transition-colors text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white text-sm"
                   >
                     <Github className="w-4 h-4 text-emerald-500" />
                     Report Issue
                   </a>
                   <a 
                     href="mailto:ondra@ok1cdj.com" 
-                    className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl transition-colors text-zinc-300 hover:text-white text-sm"
+                    className="flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-black/5 dark:border-white/5 rounded-xl transition-colors text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white text-sm"
                   >
                     <Mail className="w-4 h-4 text-emerald-500" />
                     ondra@ok1cdj.com
@@ -231,12 +231,12 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
               </section>
             </div>
 
-            <div className="p-6 bg-white/5 border-t border-white/5 flex items-center justify-center">
+            <div className="p-6 bg-black/5 dark:bg-white/5 border-t border-black/5 dark:border-white/5 flex items-center justify-center">
               <div className="flex items-center gap-2 text-zinc-500 text-xs font-medium uppercase tracking-widest">
                 <Radio className="w-4 h-4" />
                 <span>
                   DX Radar
-                  <span className="text-zinc-600 normal-case"> · {GIT_HASH}{buildDate ? ` · ${buildDate}` : ''}</span>
+                  <span className="text-zinc-400 dark:text-zinc-600 normal-case"> · {GIT_HASH}{buildDate ? ` · ${buildDate}` : ''}</span>
                 </span>
               </div>
             </div>

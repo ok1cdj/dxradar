@@ -332,10 +332,28 @@ async function startServer() {
     manualCallsigns: ""
   };
 
+  // Ordered list of cluster endpoints (index 0 = primary). An optional backup is
+  // used for automatic failover when the primary goes down or its feed goes silent.
+  const clusterEndpoints: { host: string; port: number }[] = [
+    { host: currentSettings.dxClusterHost, port: currentSettings.dxClusterPort },
+  ];
+  if (process.env.DX_CLUSTER_HOST_BACKUP) {
+    clusterEndpoints.push({
+      host: process.env.DX_CLUSTER_HOST_BACKUP,
+      port: parseInt(process.env.DX_CLUSTER_PORT_BACKUP || "23"),
+    });
+  }
+  // Silence (no data at all) longer than this means the feed is dead even if the
+  // socket is still open — the real-world outage mode for a DX cluster.
+  const STALE_MS = parseInt(process.env.DX_CLUSTER_STALE_SECONDS || "90") * 1000;
+  // While running on the backup, how often to retry the preferred primary.
+  const FAILBACK_MS = parseInt(process.env.DX_CLUSTER_FAILBACK_MINUTES || "15") * 60 * 1000;
+
   console.log("Initial DX Cluster Settings:", {
     host: currentSettings.dxClusterHost,
     port: currentSettings.dxClusterPort,
-    callsign: currentSettings.dxClusterCallsign
+    callsign: currentSettings.dxClusterCallsign,
+    backup: clusterEndpoints[1] ? `${clusterEndpoints[1].host}:${clusterEndpoints[1].port}` : "none"
   });
 
   let clusterStatus = "Disconnected";
@@ -686,6 +704,12 @@ async function startServer() {
   let isConnecting = false;
   let isLoggedIn = false;
   let hasSentConfig = false;
+  let activeIndex = 0;                              // index into clusterEndpoints
+  let lastDataAt = 0;                               // ms timestamp of last bytes from cluster
+  let failureHandled = false;                       // dedupe error/close/stale per connection
+  let failbackTimer: NodeJS.Timeout | null = null;  // primary-retry timer (backup only)
+
+  const activeEndpoint = () => clusterEndpoints[activeIndex];
 
   function broadcastSpot(spot: any) {
     const message = JSON.stringify({ type: "spot", data: spot });
@@ -720,6 +744,40 @@ async function startServer() {
     });
   }
 
+  function clearFailbackTimer() {
+    if (failbackTimer) { clearInterval(failbackTimer); failbackTimer = null; }
+  }
+
+  // While connected to the backup, periodically retry the preferred primary.
+  function startFailbackTimer() {
+    if (failbackTimer || clusterEndpoints.length < 2) return;
+    failbackTimer = setInterval(() => {
+      broadcastLog(`Retrying primary cluster ${clusterEndpoints[0].host}...`);
+      clearFailbackTimer();
+      activeIndex = 0;                                   // force next connect to the primary
+      if (reconnectTimeout) { clearTimeout(reconnectTimeout); reconnectTimeout = null; }
+      connectToCluster();                                // connectToCluster() tears down the old socket first
+    }, FAILBACK_MS);
+  }
+
+  // Single entry point for any failure (socket error, close, or a silent feed).
+  // Idempotent per connection via failureHandled so the error+close double-fire
+  // and the watchdog don't stack up multiple switches/reconnects.
+  function handleClusterFailure(reason: string) {
+    if (failureHandled) return;
+    failureHandled = true;
+    isConnecting = false;
+    clusterStatus = "Disconnected";
+    broadcastStatus();
+    clearFailbackTimer();
+    if (clusterEndpoints.length > 1) {
+      activeIndex = (activeIndex + 1) % clusterEndpoints.length;   // round-robin to the other cluster
+      broadcastLog(`Switching to DX cluster ${activeEndpoint().host}:${activeEndpoint().port} (${reason})`);
+    }
+    if (clusterSocket) { clusterSocket.removeAllListeners(); clusterSocket.destroy(); clusterSocket = null; }
+    if (!reconnectTimeout) reconnectTimeout = setTimeout(connectToCluster, 5000);
+  }
+
   function connectToCluster() {
     if (isConnecting) {
       clusterStatus = "Connecting";
@@ -741,20 +799,26 @@ async function startServer() {
     isConnecting = true;
     isLoggedIn = false;
     hasSentConfig = false;
+    failureHandled = false;
+    lastDataAt = Date.now();
     clusterStatus = "Connecting";
     broadcastStatus();
 
-    const logMsg = `Connecting to DX Cluster ${currentSettings.dxClusterHost}:${currentSettings.dxClusterPort}...`;
+    const logMsg = `Connecting to DX Cluster ${activeEndpoint().host}:${activeEndpoint().port}...`;
     console.log(logMsg);
     broadcastLog(logMsg);
 
-    clusterSocket = net.connect(currentSettings.dxClusterPort, currentSettings.dxClusterHost, () => {
+    clusterSocket = net.connect(activeEndpoint().port, activeEndpoint().host, () => {
       isConnecting = false;
+      lastDataAt = Date.now();
       clusterStatus = "Connected";
       broadcastStatus();
-      const connectedMsg = "Connected to DX Cluster";
+      const connectedMsg = `Connected to DX Cluster ${activeEndpoint().host}`;
       console.log(connectedMsg);
       broadcastLog(connectedMsg);
+      // Prefer the primary: while on the backup, keep retrying the primary.
+      if (activeIndex === 0) clearFailbackTimer();
+      else startFailbackTimer();
     });
 
     // Set a connection timeout
@@ -766,6 +830,7 @@ async function startServer() {
     });
 
     clusterSocket.on("data", (data) => {
+      lastDataAt = Date.now(); // any bytes (banner, spots, keepalive) mean the feed is alive
       const msg = data.toString();
       const msgLower = msg.toLowerCase();
       console.log("Cluster Data:", msg.trim()); // Log incoming data for debugging
@@ -878,32 +943,28 @@ async function startServer() {
     });
 
     clusterSocket.on("error", (err) => {
-      isConnecting = false;
-      clusterStatus = "Disconnected";
-      broadcastStatus();
       const errMsg = `Cluster socket error: ${err.message}`;
       console.error(errMsg);
       broadcastLog(errMsg);
-      clusterSocket?.destroy();
-      clusterSocket = null;
-      if (!reconnectTimeout) {
-        reconnectTimeout = setTimeout(connectToCluster, 5000);
-      }
+      handleClusterFailure(`socket error: ${err.message}`);
     });
 
     clusterSocket.on("close", () => {
-      isConnecting = false;
-      clusterStatus = "Disconnected";
-      broadcastStatus();
-      const closeMsg = "Cluster connection closed, reconnecting...";
-      console.log(closeMsg);
-      broadcastLog(closeMsg);
-      clusterSocket = null;
-      if (!reconnectTimeout) {
-        reconnectTimeout = setTimeout(connectToCluster, 5000);
-      }
+      console.log("Cluster connection closed");
+      broadcastLog("Cluster connection closed");
+      handleClusterFailure("connection closed");
     });
   }
+
+  // Watchdog: a DX cluster streams data every few seconds, so total silence for
+  // STALE_MS means the feed is dead even though the socket is still open.
+  setInterval(() => {
+    if (clusterStatus !== "Connected" || !clusterSocket) return;
+    if (Date.now() - lastDataAt > STALE_MS) {
+      broadcastLog(`No cluster data for ${Math.round((Date.now() - lastDataAt) / 1000)}s — treating as outage`);
+      handleClusterFailure("stale");
+    }
+  }, 30 * 1000);
 
   connectToCluster();
 

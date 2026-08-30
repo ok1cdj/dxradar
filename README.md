@@ -50,7 +50,8 @@ npm run lint     # type-check (tsc --noEmit)
 
 Server-side configuration is optional and lives in `.env` (copy from `.env.example`):
 
-- `DX_CLUSTER_HOST` / `DX_CLUSTER_PORT` / `DX_CLUSTER_CALLSIGN` / `DX_CLUSTER_COMMANDS` — DX cluster connection.
+- `DX_CLUSTER_HOST` / `DX_CLUSTER_PORT` / `DX_CLUSTER_CALLSIGN` / `DX_CLUSTER_COMMANDS` — primary DX cluster connection.
+- `DX_CLUSTER_HOST_BACKUP` / `DX_CLUSTER_PORT_BACKUP` — optional backup cluster for automatic failover. The server switches to it when the primary drops or its feed goes silent, and fails back to the primary once it recovers. Leaving `DX_CLUSTER_HOST_BACKUP` empty disables failover. `DX_CLUSTER_STALE_SECONDS` (default `90`) is how long a connected cluster may go completely silent before being treated as an outage; `DX_CLUSTER_FAILBACK_MINUTES` (default `15`) is how often the preferred primary is retried while running on the backup.
 - `CLUBLOG_API_KEY` — required server-side for ClubLog lookups.
 - `DEEPSEEK_API_BASE` — optional override for the DeepSeek API endpoint.
 

@@ -212,6 +212,23 @@ async function startServer() {
     return "Unknown";
   }
 
+  // Base amateur callsign: prefix + call-area digit + suffix ending in a letter.
+  const BASE_CALLSIGN_RE = /^[A-Z0-9]{1,3}[0-9][A-Z0-9]{0,3}[A-Z]$/;
+
+  // True if `call` is a plausible amateur callsign we can hand to ClubLog.
+  // Rejects placeholders/partials some expedition feeds emit (e.g. "JD1...",
+  // "JD1/", "..."), which would otherwise fail the lookup and waste retries.
+  // Mirrors isValidCallsign in src/utils/radioUtils.ts — keep the two in sync.
+  function isValidCallsign(call: string): boolean {
+    if (!call) return false;
+    const c = call.trim().toUpperCase();
+    if (!/^[A-Z0-9/]+$/.test(c)) return false; // no dots or other punctuation
+    const segments = c.split('/');
+    if (segments.length < 1 || segments.length > 3) return false;
+    if (segments.some(s => s.length === 0)) return false; // no leading/trailing/double slash
+    return segments.some(s => BASE_CALLSIGN_RE.test(s));
+  }
+
   const wss = new WebSocketServer({ noServer: true });
   const PORT = process.env.PORT || 3000;
   const rssParser = new Parser();
@@ -503,6 +520,9 @@ async function startServer() {
               }
             }
 
+            // Skip placeholders/partials (e.g. "JD1...") that can't be looked up.
+            if (!isValidCallsign(callsign)) continue;
+
             const websiteUrl = item.link;
             let status: 'Active' | 'Upcoming' | 'Past' = "Upcoming";
             let isWithin14Days = false;
@@ -661,7 +681,9 @@ async function startServer() {
 
               for (const call of callsigns) {
                 if (!call) continue;
-                
+                // Skip placeholders/partials that can't be looked up on ClubLog.
+                if (!isValidCallsign(call)) continue;
+
                 for (const pair of pairs) {
                   const startDay = parseInt(pair[1]);
                   const duration = parseInt(pair[2]);
@@ -1246,6 +1268,13 @@ async function startServer() {
 
     if (!callsign) {
       return res.status(400).json({ error: "Missing callsign" });
+    }
+
+    // Reject placeholders/partials from expedition feeds (e.g. "JD1...") before
+    // they ever reach ClubLog — guarantees no wasted lookup/retries regardless
+    // of source.
+    if (!isValidCallsign(callsign)) {
+      return res.status(400).json({ error: "Invalid callsign", callsign });
     }
 
     // Check status cache first

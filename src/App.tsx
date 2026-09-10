@@ -23,7 +23,7 @@ import ExpeditionsModal from './components/ExpeditionsModal';
 import GlobalPropagationBar from './components/GlobalPropagationBar';
 import { AIAnalysis } from './types';
 import { generateAIAnalysis } from './services/aiService';
-import { getBandFromFreq, matchesCallsign } from './utils/radioUtils';
+import { getBandFromFreq, matchesCallsign, isValidCallsign } from './utils/radioUtils';
 import * as socket from './services/socket';
 
 export interface Spot {
@@ -445,6 +445,11 @@ export default function App() {
   };
 
   const checkClubLog = async (callsign: string, band?: string, mode?: string, freq?: string) => {
+    // Skip placeholders/partials from expedition feeds or manual input — they
+    // would only fail the ClubLog lookup and waste retries. The server enforces
+    // this too (400), but guarding here avoids the pointless round-trip.
+    if (!isValidCallsign(callsign)) return;
+
     const cacheKey = `${callsign}-${band || 'ALL'}-${mode || 'ALL'}`;
     const now = Date.now();
 

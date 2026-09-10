@@ -49,3 +49,23 @@ export function matchesCallsign(dxCall: string, watch: string): boolean {
   const w = watch.toUpperCase();
   return d === w || d.startsWith(w + '/') || d.endsWith('/' + w);
 }
+
+/** Base amateur callsign: prefix + call-area digit + suffix ending in a letter. */
+const BASE_CALLSIGN_RE = /^[A-Z0-9]{1,3}[0-9][A-Z0-9]{0,3}[A-Z]$/;
+
+/**
+ * True if `call` is a plausible amateur radio callsign we can hand to ClubLog.
+ * Rejects placeholders/partials that some expedition feeds emit (e.g. "JD1...",
+ * "JD1/", "..."), which would otherwise fail the ClubLog lookup and waste
+ * retries. Accepts real calls including portables (e.g. "K4/EA5DOM", "EA5DOM/P").
+ * Mirrors isValidCallsign in server.ts — keep the two in sync.
+ */
+export function isValidCallsign(call: string): boolean {
+  if (!call) return false;
+  const c = call.trim().toUpperCase();
+  if (!/^[A-Z0-9/]+$/.test(c)) return false; // no dots or other punctuation
+  const segments = c.split('/');
+  if (segments.length < 1 || segments.length > 3) return false;
+  if (segments.some(s => s.length === 0)) return false; // no leading/trailing/double slash
+  return segments.some(s => BASE_CALLSIGN_RE.test(s));
+}

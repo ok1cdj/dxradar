@@ -62,6 +62,47 @@ Build-time overrides (Vite env, optional):
 
 The About dialog (help icon) shows the running build's git short hash and build timestamp.
 
+## 🐳 Docker
+
+The app ships as a single container (multi-stage build: Vite build → Express/WebSocket server run with `tsx`). It serves the built frontend, the REST APIs, and the live WebSocket on one port (`3000`).
+
+Using Docker Compose (recommended — loads `.env` automatically):
+
+```bash
+cp .env.example .env    # optional, for server-side settings
+GIT_HASH=$(git rev-parse --short HEAD) docker compose build
+docker compose up
+```
+
+Or with plain Docker:
+
+```bash
+docker build --build-arg GIT_HASH=$(git rev-parse --short HEAD) -t dxradar .
+docker run --rm -p 3000:3000 --env-file .env dxradar
+```
+
+The app is then available at `http://localhost:3000`.
+
+Notes:
+- Same-origin only — no volumes or database are required; server-side caches are in-memory and client settings live in the browser.
+- `GIT_HASH` is optional; without it the About dialog shows `unknown` (the container has no `.git`).
+- Secrets stay out of the image: `.env` is excluded via `.dockerignore` and passed in at runtime.
+
+## 📋 Logging & Diagnostics
+
+Every real outbound call to ClubLog is logged to `logs/clublog.log` (created automatically). Only actual HTTP requests are recorded — responses served from the in-memory caches are not — so the file is a faithful measure of how often ClubLog is actually queried. This is the first place to look when diagnosing ClubLog auth or rate issues.
+
+Each line is human-readable: timestamp, event (`REQ` / `RESP` / `RETRY` / `ERR`), endpoint (`dxcc` / `dxccchart`), mode, callsign, email, HTTP status and timing. The ClubLog API key and password are **never** written to the file.
+
+```
+2026-09-10 14:32:07  REQ   GET  dxcc  call=OH2XX
+2026-09-10 14:32:08  RESP  200  dxcc  call=OH2XX  (170ms)
+2026-09-10 14:32:09  REQ   GET  dxccchart mode=1  call=OK1ABC email=you@example.com
+2026-09-10 14:32:10  RESP  200  dxccchart mode=1  call=OK1ABC email=you@example.com  (631ms)
+```
+
+Count the real request rate per minute with `cut -c1-16 logs/clublog.log | uniq -c`. The file rotates to `clublog.log.1` once it passes 10 MB, and is excluded from git and Docker images.
+
 ## 🤝 Data Sources & Credits
 
 Expedition schedules are aggregated from two excellent community resources:

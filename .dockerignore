@@ -1,0 +1,14 @@
+node_modules
+dist
+build
+coverage
+.git
+.env
+.env.*
+!.env.example
+*.log
+logs/
+.DS_Store
+.claude
+README.md
+test_regex.js

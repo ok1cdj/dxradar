@@ -1,0 +1,17 @@
+services:
+  dxradar:
+    build:
+      context: .
+      # Pass the real git hash to the build so the About page shows it:
+      #   GIT_HASH=$(git rev-parse --short HEAD) docker compose build
+      args:
+        GIT_HASH: ${GIT_HASH:-unknown}
+    image: dxradar
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+    restart: unless-stopped

@@ -1,6 +1,7 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import Parser from "rss-parser";
 import net from "net";
@@ -215,11 +216,76 @@ async function startServer() {
   const PORT = process.env.PORT || 3000;
   const rssParser = new Parser();
 
+  // --- Club Log outbound-call file logger ------------------------------------
+  // Records ONLY actual HTTP calls to clublog.org (cache hits never reach here),
+  // in a human-readable, tail-friendly format. API key and password are never
+  // written to the file — only the endpoint, mode, callsign and email.
+  const CLUBLOG_LOG_DIR = path.join(process.cwd(), "logs");
+  const CLUBLOG_LOG_FILE = path.join(CLUBLOG_LOG_DIR, "clublog.log");
+  const CLUBLOG_LOG_MAX_BYTES = 10 * 1024 * 1024; // 10 MB before rotation
+  try {
+    fs.mkdirSync(CLUBLOG_LOG_DIR, { recursive: true });
+  } catch { /* ignore — logging must never break the app */ }
+
+  // Total request attempts is retries + 1 (fetchWithRetry starts with retries=3).
+  const CLUBLOG_MAX_ATTEMPTS = 4;
+
+  // Derive a short friendly endpoint label + safe params from a clublog.org URL.
+  function describeClublogUrl(url: string): string {
+    try {
+      const u = new URL(url);
+      const isChart = u.pathname.includes("json_dxccchart");
+      const name = isChart ? "dxccchart" : (u.pathname.includes("dxcc") ? "dxcc" : u.pathname);
+      const mode = u.searchParams.get("mode");
+      const call = u.searchParams.get("call");
+      const email = u.searchParams.get("email");
+      let out = name;
+      if (mode !== null) out += ` mode=${mode}`;
+      if (call) out += `  call=${call}`;
+      if (email) out += ` email=${email}`;
+      return out;
+    } catch {
+      return url;
+    }
+  }
+
+  function clublogTimestamp(): string {
+    // "YYYY-MM-DD HH:MM:SS" in local time.
+    const d = new Date();
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ` +
+           `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
+
+  function clublogLog(line: string): void {
+    try {
+      // Size-based rotation: clublog.log -> clublog.log.1 (keep one generation).
+      try {
+        const st = fs.statSync(CLUBLOG_LOG_FILE);
+        if (st.size > CLUBLOG_LOG_MAX_BYTES) {
+          fs.renameSync(CLUBLOG_LOG_FILE, `${CLUBLOG_LOG_FILE}.1`);
+        }
+      } catch { /* file may not exist yet — fine */ }
+      fs.appendFile(CLUBLOG_LOG_FILE, `${clublogTimestamp()}  ${line}\n`, () => {});
+    } catch { /* never let logging throw into the request path */ }
+  }
+  // ---------------------------------------------------------------------------
+
   // Robust fetch with retry and timeout
   async function fetchWithRetry(url: string, options: any = {}, retries = 3, backoff = 1000) {
     const timeout = options.timeout || 15000;
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
+
+    const isClublog = url.includes("clublog.org");
+    const desc = isClublog ? describeClublogUrl(url) : "";
+    const method = (options.method || "GET").toUpperCase();
+    const attempt = CLUBLOG_MAX_ATTEMPTS - retries;
+    const started = Date.now();
+
+    if (isClublog) {
+      clublogLog(`REQ   ${method}  ${desc}`);
+    }
 
     try {
       const response = await fetch(url, {
@@ -227,13 +293,23 @@ async function startServer() {
         signal: controller.signal
       });
       clearTimeout(id);
+      if (isClublog) {
+        clublogLog(`RESP  ${response.status}  ${desc}  (${Date.now() - started}ms)`);
+      }
       return response;
     } catch (error) {
       clearTimeout(id);
+      const msg = error instanceof Error ? error.message : String(error);
       if (retries > 0) {
+        if (isClublog) {
+          clublogLog(`RETRY ${desc}  attempt ${attempt}/${CLUBLOG_MAX_ATTEMPTS - 1} in ${backoff}ms — ${msg}`);
+        }
         console.log(`Fetch failed for ${url}, retrying in ${backoff}ms... (${retries} retries left)`);
         await new Promise(resolve => setTimeout(resolve, backoff));
         return fetchWithRetry(url, options, retries - 1, backoff * 2);
+      }
+      if (isClublog) {
+        clublogLog(`ERR   ${desc}  gave up after ${CLUBLOG_MAX_ATTEMPTS - 1} retries — ${msg}  (${Date.now() - started}ms)`);
       }
       throw error;
     }

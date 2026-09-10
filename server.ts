@@ -510,18 +510,30 @@ async function startServer() {
             const subParts = rest.split('--').map(p => p.trim());
             
             let dates = subParts[0] || "Unknown Dates";
-            let callsign = subParts[1] || "";
-            if (!callsign) continue;
+            const titleCall = (subParts[1] || "").trim();
+            if (!titleCall) continue;
 
-            if (callsign.length < 4 || callsign.includes('/')) {
-              const asMatch = description.match(/ as\s+([A-Z0-9\/]+)/i);
-              if (asMatch) {
-                callsign = asMatch[1].trim();
-              }
+            // NG3K titles usually carry only the DXCC prefix (e.g. "JD1", "J3");
+            // the real operating callsign(s) live in the description as "... as CALL".
+            // Collect every valid operating callsign so multi-op expeditions are
+            // fully watched (e.g. "MM8IJU as J38LD and GM5RDX as J38DX" -> both).
+            const callsigns: string[] = [];
+            const addCall = (c: string) => {
+              const up = c.trim().toUpperCase();
+              if (isValidCallsign(up) && !callsigns.includes(up)) callsigns.push(up);
+            };
+            // Keep the title itself only when it's already a full call (team calls
+            // like "C8K", "D44TWO"); bare prefixes like "JD1" fail validation.
+            addCall(titleCall);
+            // Extract all "as CALL" operating callsigns from the description.
+            const asRe = /\bas\s+([A-Z0-9][A-Z0-9\/]*)/gi;
+            let asMatch: RegExpExecArray | null;
+            while ((asMatch = asRe.exec(description)) !== null) {
+              addCall(asMatch[1]);
             }
 
-            // Skip placeholders/partials (e.g. "JD1...") that can't be looked up.
-            if (!isValidCallsign(callsign)) continue;
+            // Nothing usable (only a prefix/placeholder like "JD1..") — skip.
+            if (callsigns.length === 0) continue;
 
             const websiteUrl = item.link;
             let status: 'Active' | 'Upcoming' | 'Past' = "Upcoming";
@@ -581,17 +593,19 @@ async function startServer() {
             }
 
             if (status === 'Active' || (status === 'Upcoming' && isWithin14Days)) {
-              parsedExpeditions.push({
-                id: String(idCounter++),
-                callsign,
-                location,
-                dates,
-                status: status as 'Active' | 'Upcoming',
-                websiteUrl,
-                source: 'NG3K ADXO',
-                startDate: parsedStartDate,
-                endDate: parsedEndDate
-              });
+              for (const callsign of callsigns) {
+                parsedExpeditions.push({
+                  id: String(idCounter++),
+                  callsign,
+                  location,
+                  dates,
+                  status: status as 'Active' | 'Upcoming',
+                  websiteUrl,
+                  source: 'NG3K ADXO',
+                  startDate: parsedStartDate,
+                  endDate: parsedEndDate
+                });
+              }
             }
           } catch (e) {
             console.error("Error parsing RSS item:", e);

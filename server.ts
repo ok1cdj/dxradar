@@ -1140,10 +1140,16 @@ async function startServer() {
         addSpot(qo100Spot(s));
       }
       qo100Cursor = body.last;
-      if (qo100Ok !== true) broadcastLog("QO-100 skimmer: connected");
+      if (qo100Ok !== true) {
+        console.log("QO-100 skimmer: connected");
+        broadcastLog("QO-100 skimmer: connected");
+      }
       qo100Ok = true;
     } catch (err: any) {
-      if (qo100Ok !== false) broadcastLog(`QO-100 skimmer unavailable: ${err.message}`);
+      if (qo100Ok !== false) {
+        console.warn(`QO-100 skimmer unavailable: ${err.message}`);
+        broadcastLog(`QO-100 skimmer unavailable: ${err.message}`);
+      }
       qo100Ok = false;
     }
   }

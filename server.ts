@@ -103,6 +103,9 @@ function getBandFromFreq(freqKhz: number): string {
   if (freqKhz >= 70000 && freqKhz <= 70500) return "4m";
   if (freqKhz >= 144000 && freqKhz <= 148000) return "2m";
   if (freqKhz >= 430000 && freqKhz <= 440000) return "70cm";
+  // QO-100 narrowband transponder: 10489.5 MHz downlink, 2400 MHz uplink
+  if (freqKhz >= 10489500 && freqKhz <= 10490000) return "QO100";
+  if (freqKhz >= 2400000 && freqKhz <= 2400500) return "QO100";
   return "Unknown";
 }
 
@@ -823,6 +826,18 @@ async function startServer() {
 
   const activeEndpoint = () => clusterEndpoints[activeIndex];
 
+  /** Does the spotted call belong to an active expedition (exact, CALL/... or .../CALL)? */
+  function isWatchedCall(dxCall: string): boolean {
+    const c = dxCall.toUpperCase();
+    return activeCallsigns.some(call => c === call || c.startsWith(call + "/") || c.endsWith("/" + call));
+  }
+
+  function addSpot(spot: any) {
+    spotsCache.unshift(spot);
+    if (spotsCache.length > MAX_SPOTS) spotsCache.pop();
+    broadcastSpot(spot);
+  }
+
   function broadcastSpot(spot: any) {
     const message = JSON.stringify({ type: "spot", data: spot });
     wss.clients.forEach((client) => {
@@ -1037,17 +1052,9 @@ async function startServer() {
             };
 
             // Only cache and broadcast if it matches an active expedition
-            const isInteresting = activeCallsigns.some(call => 
-              dxCall.toUpperCase() === call || 
-              dxCall.toUpperCase().startsWith(call + "/") || 
-              dxCall.toUpperCase().endsWith("/" + call)
-            );
-
-            if (isInteresting) {
+            if (isWatchedCall(dxCall)) {
               console.log(`Interesting spot found: ${dxCall} on ${freq}`);
-              spotsCache.unshift(spot);
-              if (spotsCache.length > MAX_SPOTS) spotsCache.pop();
-              broadcastSpot(spot);
+              addSpot(spot);
             }
           }
         }
@@ -1079,6 +1086,72 @@ async function startServer() {
   }, 30 * 1000);
 
   connectToCluster();
+
+  // QO-100 FT8/FT4 skimmer (QO100-FT-skimmer, another container on the "radio" network):
+  // poll its internal API and feed spots of expedition calls in like cluster spots.
+  const QO100_URL = process.env.QO100_SKIMMER_URL;              // e.g. http://qo100-skimmer:8080
+  const QO100_TOKEN = process.env.QO100_SKIMMER_TOKEN || "";
+  const QO100_SPOTTER = process.env.QO100_SKIMMER_SPOTTER || "QO100-#";
+  const QO100_CONT = process.env.QO100_SKIMMER_CONT || "EU";
+  const QO100_POLL_MS = 15 * 1000;
+  // An expedition decoded every period would flood the cache: one spot per call+mode per minute
+  const QO100_REPEAT_MS = 60 * 1000;
+  // On start, replay what the skimmer heard recently
+  const QO100_REPLAY_MS = 30 * 60 * 1000;
+  let qo100Cursor: number | null = null;
+  let qo100Ok: boolean | null = null;
+  const qo100LastSent = new Map<string, number>();
+
+  function qo100Spot(s: any) {
+    const t = new Date(s.ts);
+    const hhmm = t.toISOString().slice(11, 16).replace(":", "");
+    const snr = s.snr >= 0 ? `+${s.snr}` : String(s.snr);
+    return {
+      id: `qo100-${s.id}`,
+      spotter: QO100_SPOTTER,
+      spotterCont: QO100_CONT,
+      freq: (s.rfHz / 1000).toFixed(1),
+      dxCall: s.call,
+      mode: s.mode,
+      comment: `${s.mode} ${snr} dB ${s.msg}`,
+      time: `${hhmm}Z`,
+      isSkimmer: true,
+      timestamp: t.toISOString(),
+    };
+  }
+
+  async function pollQo100() {
+    try {
+      const after = qo100Cursor ?? 0;
+      const res = await fetch(`${QO100_URL}/internal/spots?after=${after}&limit=1000`, {
+        headers: { authorization: `Bearer ${QO100_TOKEN}` },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const body = await res.json() as { spots: any[]; last: number };
+      const now = Date.now();
+      for (const s of body.spots) {
+        if (!s.call || !isWatchedCall(s.call)) continue;
+        if (qo100Cursor === null && now - s.ts > QO100_REPLAY_MS) continue;
+        const key = `${s.call}|${s.mode}`;
+        if (now - (qo100LastSent.get(key) ?? 0) < QO100_REPEAT_MS && qo100Cursor !== null) continue;
+        qo100LastSent.set(key, now);
+        console.log(`QO-100 spot: ${s.call} ${s.mode} ${s.snr} dB`);
+        addSpot(qo100Spot(s));
+      }
+      qo100Cursor = body.last;
+      if (qo100Ok !== true) broadcastLog("QO-100 skimmer: connected");
+      qo100Ok = true;
+    } catch (err: any) {
+      if (qo100Ok !== false) broadcastLog(`QO-100 skimmer unavailable: ${err.message}`);
+      qo100Ok = false;
+    }
+  }
+
+  if (QO100_URL) {
+    pollQo100();
+    setInterval(pollQo100, QO100_POLL_MS);
+  }
 
   // API Routes
   app.post("/api/settings", (req, res) => {

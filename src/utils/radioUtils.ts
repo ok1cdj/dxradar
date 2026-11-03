@@ -31,6 +31,9 @@ export function getBandFromFreq(freq: string | number): string {
     if (f >= 24890 && f <= 24990) return '12m';
     if (f >= 28000 && f <= 29700) return '10m';
     if (f >= 50000 && f <= 54000) return '6m';
+    // QO-100 narrowband transponder: 10489.5 MHz downlink, 2400 MHz uplink
+    if (f >= 10489500 && f <= 10490000) return 'QO100';
+    if (f >= 2400000 && f <= 2400500) return 'QO100';
   }
 
   // Not a numeric frequency: pass through (e.g. it's already a band name).

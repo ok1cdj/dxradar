@@ -14,4 +14,14 @@ services:
     environment:
       NODE_ENV: production
       PORT: "3000"
+      # QO-100 FT8/FT4 skimmer on the shared "radio" network (token in .env)
+      QO100_SKIMMER_URL: http://qo100-skimmer:8080
+    networks:
+      - default
+      - radio
     restart: unless-stopped
+
+networks:
+  # Shared with QO100-FT-skimmer; create once on the host: docker network create radio
+  radio:
+    external: true

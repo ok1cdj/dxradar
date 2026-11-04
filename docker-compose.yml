@@ -6,16 +6,23 @@ services:
       #   GIT_HASH=$(git rev-parse --short HEAD) docker compose build
       args:
         GIT_HASH: ${GIT_HASH:-unknown}
+        # Optional model overrides baked into the frontend (empty = app default)
+        VITE_GEMINI_MODEL: ${VITE_GEMINI_MODEL:-}
+        VITE_DEEPSEEK_MODEL: ${VITE_DEEPSEEK_MODEL:-}
     image: dxradar
     ports:
-      - "3000:3000"
+      # Localhost only; the reverse proxy on the host publishes it
+      - "127.0.0.1:3000:3000"
+    volumes:
+      # ClubLog request log (logs/clublog.log) survives container rebuilds
+      - ./logs:/app/logs
     env_file:
       - .env
     environment:
       NODE_ENV: production
       PORT: "3000"
       # QO-100 FT8/FT4 skimmer on the shared "radio" network (token in .env)
-      QO100_SKIMMER_URL: http://qo100-skimmer:8080
+      QO100_SKIMMER_URL: http://qo100-ft-skimmer-skimmer-1:8080
     networks:
       - default
       - radio

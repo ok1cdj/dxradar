@@ -81,12 +81,14 @@ docker build --build-arg GIT_HASH=$(git rev-parse --short HEAD) -t dxradar .
 docker run --rm -p 3000:3000 --env-file .env dxradar
 ```
 
-The app is then available at `http://localhost:3000`.
+The app is then available at `http://localhost:3000`. Compose binds the port to `127.0.0.1` only, so on a server put a reverse proxy in front of it.
 
 Notes:
-- Same-origin only — no volumes or database are required; server-side caches are in-memory and client settings live in the browser.
+- Same-origin only — no database is required; server-side caches are in-memory and client settings live in the browser. Compose mounts `./logs` so the ClubLog request log survives rebuilds.
 - `GIT_HASH` is optional; without it the About dialog shows `unknown` (the container has no `.git`).
 - Secrets stay out of the image: `.env` is excluded via `.dockerignore` and passed in at runtime.
+- Because `.env` isn't in the build context, the build-time `VITE_GEMINI_MODEL` / `VITE_DEEPSEEK_MODEL` overrides are passed as build args; Compose fills them in from `.env` or the shell environment.
+- The QO-100 skimmer is reached over the external `radio` network (`docker network create radio` once on the host).
 
 ## 📋 Logging & Diagnostics
 

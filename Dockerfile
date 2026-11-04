@@ -8,9 +8,12 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# Build the frontend into dist/. The git hash shown on the About page falls
-# back to "unknown" here since .git isn't copied; pass GIT_HASH to override.
+# Build the frontend into dist/. .git isn't copied, so the hash shown on the
+# About page comes from GIT_HASH (falls back to "unknown").
 ARG GIT_HASH=unknown
+# .env is excluded from the build context; Vite build-time overrides come in as args.
+ARG VITE_GEMINI_MODEL
+ARG VITE_DEEPSEEK_MODEL
 COPY . .
 RUN npm run build
 

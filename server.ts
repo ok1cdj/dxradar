@@ -1089,7 +1089,7 @@ async function startServer() {
 
   // QO-100 FT8/FT4 skimmer (QO100-FT-skimmer, another container on the "radio" network):
   // poll its internal API and feed spots of expedition calls in like cluster spots.
-  const QO100_URL = process.env.QO100_SKIMMER_URL;              // e.g. http://qo100-skimmer:8080
+  const QO100_URL = process.env.QO100_SKIMMER_URL;              // e.g. http://qo100-ft-skimmer-skimmer-1:8080
   const QO100_TOKEN = process.env.QO100_SKIMMER_TOKEN || "";
   const QO100_SPOTTER = process.env.QO100_SKIMMER_SPOTTER || "QO100-#";
   const QO100_CONT = process.env.QO100_SKIMMER_CONT || "EU";

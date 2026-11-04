@@ -2,9 +2,11 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {execSync} from 'child_process';
-import {defineConfig, loadEnv} from 'vite';
+import {defineConfig} from 'vite';
 
 function getGitHash(): string {
+  // Docker builds have no .git; the hash comes in via the GIT_HASH build arg.
+  if (process.env.GIT_HASH && process.env.GIT_HASH !== 'unknown') return process.env.GIT_HASH;
   try {
     return execSync('git rev-parse --short HEAD').toString().trim();
   } catch {
@@ -12,12 +14,10 @@ function getGitHash(): string {
   }
 }
 
-export default defineConfig(({mode}) => {
-  const env = loadEnv(mode, '.', '');
+export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       __GIT_HASH__: JSON.stringify(getGitHash()),
       __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
     },

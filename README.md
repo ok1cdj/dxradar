@@ -104,12 +104,12 @@ DX Radar can take FT8/FT4 spots from a QO100-FT-skimmer instance decoding the QO
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `QO100_SKIMMER_URL` | *(unset = feed off)* | Skimmer base URL; in Docker Compose `http://qo100-ft-skimmer-skimmer-1:8080` |
+| `QO100_SKIMMER_URL` | *(unset = feed off)* | Skimmer base URL without a trailing slash; Docker Compose defaults to `http://qo100-ft-skimmer-skimmer-1:8080`, a remote skimmer e.g. `https://qo100.ok1cdj.com` |
 | `QO100_SKIMMER_TOKEN` | — | Must equal `SKIMMER_INTERNAL_TOKEN` in the skimmer's `.env` |
 | `QO100_SKIMMER_SPOTTER` | `QO100-#` | Spotter name shown on the spots |
 | `QO100_SKIMMER_CONT` | `EU` | Spotter continent (used by "my continent only") |
 
-With Docker Compose both containers share the external `radio` network, and DX Radar reaches the skimmer by its container name. The connection state is logged to stdout:
+With Docker Compose on one host both containers share the external `radio` network, and DX Radar reaches the skimmer by its container name. A skimmer on another host is reached over HTTPS: set `QO100_SKIMMER_URL` in `.env` (the reverse proxy must pass `/internal/*` through). The connection state is logged to stdout:
 
 ```bash
 docker compose logs dxradar | grep -i qo-100

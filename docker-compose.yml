@@ -23,8 +23,9 @@ services:
     environment:
       NODE_ENV: production
       PORT: "3000"
-      # QO-100 FT8/FT4 skimmer on the shared "radio" network (token in .env)
-      QO100_SKIMMER_URL: http://qo100-ft-skimmer-skimmer-1:8080
+      # QO-100 skimmer: by default on the shared "radio" network; a skimmer on another
+      # host is set in .env, e.g. QO100_SKIMMER_URL=https://qo100.ok1cdj.com (token in .env)
+      QO100_SKIMMER_URL: ${QO100_SKIMMER_URL:-http://qo100-ft-skimmer-skimmer-1:8080}
     networks:
       - default
       - radio

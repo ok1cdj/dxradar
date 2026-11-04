@@ -12,6 +12,7 @@ export interface Settings {
   manualCallsigns: string;
   hideConfirmed: boolean;
   onlyMyContinent: boolean;
+  showQo100: boolean;
   aiProvider: 'gemini' | 'deepseek';
   geminiApiKey: string;
   deepseekApiKey: string;
@@ -26,6 +27,7 @@ const DEFAULT_SETTINGS: Settings = {
   manualCallsigns: '',
   hideConfirmed: false,
   onlyMyContinent: false,
+  showQo100: true,
   aiProvider: 'gemini',
   geminiApiKey: '',
   deepseekApiKey: '',
@@ -273,6 +275,25 @@ export default function SettingsModal({ isOpen, onClose, onSave }: SettingsModal
                 >
                   <motion.span
                     animate={{ x: settings.onlyMyContinent ? 18 : 2 }}
+                    className="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm"
+                  />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5">
+                <label htmlFor="showQo100" className="text-sm font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer select-none">
+                  Show QO-100 satellite spots
+                </label>
+                <button
+                  type="button"
+                  id="showQo100"
+                  onClick={() => setSettings({...settings, showQo100: !settings.showQo100})}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
+                    settings.showQo100 ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'
+                  }`}
+                >
+                  <motion.span
+                    animate={{ x: settings.showQo100 ? 18 : 2 }}
                     className="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm"
                   />
                 </button>

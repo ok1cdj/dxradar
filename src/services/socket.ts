@@ -10,6 +10,7 @@
  *   const off = subscribe('spot', (data) => { ... });   // off() to unsubscribe
  *   const offOpen = onOpen(() => { ... });               // fires on (re)connect
  *   const offClose = onClose(() => { ... });              // fires on disconnect
+ *   send('watch', [...]);                                 // dropped while disconnected
  */
 
 type Handler = (data: any) => void;
@@ -91,6 +92,13 @@ function ensureConnected() {
 
 export function isConnected(): boolean {
   return connected;
+}
+
+/** Send a message to the server. Dropped when not connected; resend from onOpen. */
+export function send(type: string, data: any): void {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type, data }));
+  }
 }
 
 /** Subscribe to a message type. Returns an unsubscribe function. */

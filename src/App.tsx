@@ -169,6 +169,7 @@ export default function App() {
     manualCallsigns: '',
     hideConfirmed: false,
     onlyMyContinent: false,
+    showQo100: true,
     aiProvider: 'gemini',
     geminiApiKey: '',
     deepseekApiKey: '',
@@ -191,28 +192,32 @@ export default function App() {
   const analyzingSlotsRef = useRef(analyzingSlots);
   useEffect(() => { aiAnalysesRef.current = aiAnalyses; }, [aiAnalyses]);
   useEffect(() => { analyzingSlotsRef.current = analyzingSlots; }, [analyzingSlots]);
+  // Set below once allExpeditions is computed
+  const allExpeditionsRef = useRef<{ callsign: string }[]>([]);
 
-  // Load and sync settings on mount
+  // Load settings on mount
   useEffect(() => {
     const saved = localStorage.getItem('dx_expedition_settings');
     if (saved) {
       try {
         const parsedSettings = JSON.parse(saved);
         setSettings(prev => ({ ...prev, ...parsedSettings }));
-        // Sync only spotLifetime and manualCallsigns to server
-        fetch('/api/settings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            spotLifetime: parsedSettings.spotLifetime,
-            manualCallsigns: parsedSettings.manualCallsigns
-          })
-        });
       } catch (e) {
-        console.error('Failed to sync settings', e);
+        console.error('Failed to load settings', e);
       }
     }
   }, []);
+
+  // Register this browser's manual callsigns with the server, which keeps spots
+  // for the union of all connected clients' lists. Resent on every (re)connect.
+  useEffect(() => {
+    const calls = (settings.manualCallsigns || '')
+      .split(',')
+      .map(c => c.trim().toUpperCase())
+      .filter(c => c.length > 0);
+    // onOpen fires right away when already connected
+    return socket.onOpen(() => socket.send('watch', calls));
+  }, [settings.manualCallsigns]);
 
   // Background AI Analysis Logic
   useEffect(() => {
@@ -223,6 +228,8 @@ export default function App() {
       // Group spots by slot (callsign-band-mode)
       const slots: { [key: string]: Spot[] } = {};
       liveSpots.forEach(spot => {
+        // The server also sends spots of other users' manual calls; only analyze ours
+        if (!allExpeditionsRef.current.some(e => matchesCallsign(spot.dxCall, e.callsign))) return;
         const band = getBandFromFreq(spot.freq);
         const key = `${spot.dxCall}-${band}-${spot.mode}`;
         if (!slots[key]) slots[key] = [];
@@ -321,14 +328,6 @@ export default function App() {
     setSettings(newSettings);
     localStorage.setItem('dx_expedition_settings', JSON.stringify(newSettings));
     try {
-      await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          spotLifetime: newSettings.spotLifetime,
-          manualCallsigns: newSettings.manualCallsigns
-        })
-      });
       // Clear status cache to re-check
       setExpeditionStatus({});
       setLastClubLogCheck({});
@@ -558,6 +557,7 @@ export default function App() {
       return e;
     });
   }, [expeditions, manualExpeditions, expeditionStatus]);
+  useEffect(() => { allExpeditionsRef.current = allExpeditions; }, [allExpeditions]);
 
   // Group spots by expedition
   const activeExpeditionsData = useMemo<{ [callsign: string]: { band: string, freq: string, mode: string, time: string }[] }>(() => {
@@ -582,6 +582,7 @@ export default function App() {
         if (!grouped[exp.callsign]) grouped[exp.callsign] = [];
         
         const band = getBandFromFreq(spot.freq);
+        if (band === 'QO100' && !settings.showQo100) return;
         
         // Only add unique band/mode pairs (we keep the most recent frequency for that band/mode)
         const existingIdx = grouped[exp.callsign].findIndex(s => s.band === band && s.mode === spot.mode);
@@ -597,7 +598,7 @@ export default function App() {
     });
 
     return grouped;
-  }, [liveSpots, allExpeditions, settings.spotLifetime, settings.onlyMyContinent, userContinent]);
+  }, [liveSpots, allExpeditions, settings.spotLifetime, settings.onlyMyContinent, settings.showQo100, userContinent]);
 
   // Trigger Club Log checks in a separate effect
   useEffect(() => {

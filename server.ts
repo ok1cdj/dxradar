@@ -338,7 +338,9 @@ async function startServer() {
   // DX Cluster Logic
   const spotsCache: any[] = [];
   const MAX_SPOTS = 2000;
+  // Calls whose spots are kept: active expeditions + every connected client's manual list
   let activeCallsigns: string[] = [];
+  let expeditionCallsigns: string[] = [];
   let propagationData: any = null;
 
   async function fetchPropagationData() {
@@ -424,8 +426,6 @@ async function startServer() {
     dxClusterHost: process.env.DX_CLUSTER_HOST || "ve7cc.net",
     dxClusterPort: parseInt(process.env.DX_CLUSTER_PORT || "23"),
     dxClusterCallsign: process.env.DX_CLUSTER_CALLSIGN || "GUEST",
-    spotLifetime: 30,
-    manualCallsigns: ""
   };
 
   // Ordered list of cluster endpoints (index 0 = primary). An optional backup is
@@ -456,9 +456,28 @@ async function startServer() {
 
   wss.on("connection", (ws: any) => {
     ws.isAlive = true;
+    ws.manualCalls = [] as string[];
     ws.on('pong', () => {
       ws.isAlive = true;
     });
+
+    // Each client registers its own manual watch list (kept in its localStorage)
+    ws.on('message', (raw: any) => {
+      let msg: any;
+      try {
+        msg = JSON.parse(raw.toString());
+      } catch {
+        return;
+      }
+      if (msg?.type !== "watch" || !Array.isArray(msg.data)) return;
+      ws.manualCalls = msg.data
+        .filter((c: any) => typeof c === "string")
+        .map((c: string) => c.trim().toUpperCase())
+        .filter((c: string) => c.length <= 20 && isValidCallsign(c))
+        .slice(0, 100);
+      updateWatchedCallsigns();
+    });
+    ws.on('close', () => updateWatchedCallsigns());
 
     // Send current status to new client
     ws.send(JSON.stringify({ type: "status", data: { status: clusterStatus, host: currentSettings.dxClusterHost } }));
@@ -747,16 +766,6 @@ async function startServer() {
         console.error("Failed to fetch HamRadioTimeline:", timelineErr);
       }
 
-      // 3. Add manual callsigns
-      if (currentSettings.manualCallsigns) {
-        const manual = currentSettings.manualCallsigns.split(",")
-          .map(c => c.trim().toUpperCase())
-          .filter(c => c.length > 0);
-        for (const m of manual) {
-          calls.add(m);
-        }
-      }
-
       // Merge and deduplicate parsedExpeditions (prefer tracking all, but unify tags)
       const uniqueExpeditions = [];
       const seen = new Set();
@@ -802,9 +811,10 @@ async function startServer() {
       expeditionsCache = uniqueExpeditions;
       lastFetchTime = Date.now();
       
-      activeCallsigns = Array.from(calls);
-      console.log(`Updated expeditions cache: ${expeditionsCache.length} found. Active callsigns for validation: ${activeCallsigns.length}`);
-      broadcastLog(`Found ${activeCallsigns.length} active expedition callsigns.`);
+      expeditionCallsigns = Array.from(calls);
+      updateWatchedCallsigns();
+      console.log(`Updated expeditions cache: ${expeditionsCache.length} found. Active callsigns for validation: ${expeditionCallsigns.length}`);
+      broadcastLog(`Found ${expeditionCallsigns.length} active expedition callsigns.`);
     } catch (err) {
       console.error("Error heavily updating active callsigns:", err);
     }
@@ -825,6 +835,15 @@ async function startServer() {
   let failbackTimer: NodeJS.Timeout | null = null;  // primary-retry timer (backup only)
 
   const activeEndpoint = () => clusterEndpoints[activeIndex];
+
+  /** Rebuild activeCallsigns from the expeditions and all connected clients' manual lists. */
+  function updateWatchedCallsigns() {
+    const calls = new Set(expeditionCallsigns);
+    wss.clients.forEach((client: any) => {
+      for (const c of client.manualCalls ?? []) calls.add(c);
+    });
+    activeCallsigns = Array.from(calls);
+  }
 
   /** Does the spotted call belong to an active expedition (exact, CALL/... or .../CALL)? */
   function isWatchedCall(dxCall: string): boolean {
@@ -1160,19 +1179,6 @@ async function startServer() {
   }
 
   // API Routes
-  app.post("/api/settings", (req, res) => {
-    const { spotLifetime, manualCallsigns } = req.body;
-    
-    currentSettings.spotLifetime = parseInt(spotLifetime) || currentSettings.spotLifetime;
-    currentSettings.manualCallsigns = manualCallsigns !== undefined ? manualCallsigns : currentSettings.manualCallsigns;
-
-    console.log("Settings updated");
-    updateActiveCallsigns(); // Refresh the list immediately
-    broadcastStatus();
-    
-    res.json({ status: "ok", settings: currentSettings });
-  });
-
   app.get("/api/spots", (req, res) => {
     res.json(spotsCache);
   });

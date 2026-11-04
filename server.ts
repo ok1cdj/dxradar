@@ -1256,6 +1256,8 @@ async function startServer() {
   const DXCC_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
   const STATUS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
   const CHART_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+  // Satellite grid (sat=1) is keyed by Club Log satellite id instead of band; 51 = QO-100
+  const CLUBLOG_SAT_QO100 = "51";
 
   async function getDxccChart(email: string, password: string, myCall: string) {
     const now = Date.now();
@@ -1277,7 +1279,7 @@ async function startServer() {
         const clublogApiKey = process.env.CLUBLOG_API_KEY;
         if (!clublogApiKey) throw new Error("Club Log API Key missing");
 
-        console.log(`Fetching Club Log DXCC charts for CW(1), PH(2), DA(3) for ${myCall}...`);
+        console.log(`Fetching Club Log DXCC + satellite charts for CW(1), PH(2), DA(3) for ${myCall}...`);
         
         const modes = [
           { id: 1, name: 'CW' },
@@ -1286,6 +1288,19 @@ async function startServer() {
         ];
 
         const normalizedChart: any = {};
+
+        // Satellite grid per mode. Optional: on failure the chart just lacks the QO100 band.
+        const satResultsPromise = Promise.all(modes.map(async (m) => {
+          const url = `https://clublog.org/json_dxccchart.php?api=${encodeURIComponent(clublogApiKey)}&call=${encodeURIComponent(myCall)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&mode=${m.id}&sat=1`;
+          try {
+            const res = await fetchWithRetry(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return { name: m.name, chart: await res.json() };
+          } catch (err: any) {
+            console.warn(`Club Log satellite chart (mode=${m.id}) failed: ${err.message}`);
+            return { name: m.name, chart: null };
+          }
+        }));
 
         // Fetch all 3 modes in parallel
         const fetchResults = await Promise.all(modes.map(async (m) => {
@@ -1325,6 +1340,20 @@ async function startServer() {
               }
             });
           }
+        });
+
+        // Merge QO-100 from the satellite grid in as band "QO100" (same status codes)
+        (await satResultsPromise).forEach(({ name, chart }) => {
+          if (!chart || typeof chart !== 'object') return;
+          Object.entries(chart).forEach(([dxccId, sats]: [string, any]) => {
+            const status = sats?.[CLUBLOG_SAT_QO100];
+            if (status === undefined) return;
+            if (!normalizedChart[dxccId]) normalizedChart[dxccId] = {};
+            if (!normalizedChart[dxccId].QO100) normalizedChart[dxccId].QO100 = {};
+            const worked = status === 1 || status === 2 || status === 3;
+            const confirmed = status === 1 || status === 3;
+            normalizedChart[dxccId].QO100[name] = { w: worked ? 1 : 0, c: confirmed ? 1 : 0 };
+          });
         });
 
         console.log(`Successfully fetched and merged charts for ${myCall}. Total DXCCs: ${Object.keys(normalizedChart).length}`);

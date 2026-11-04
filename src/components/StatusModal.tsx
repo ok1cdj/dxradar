@@ -24,7 +24,8 @@ interface StatusModalProps {
   };
 }
 
-const BANDS = DX_BANDS;
+// QO100 status comes from Club Log's satellite grid (merged in by the server)
+const BANDS = [...DX_BANDS, 'QO100'];
 const MODES = ['CW', 'DIGI', 'SSB'];
 
 export default function StatusModal({ isOpen, onClose, callsign, status }: StatusModalProps) {

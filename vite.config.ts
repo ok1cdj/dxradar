@@ -8,7 +8,7 @@ function getGitHash(): string {
   // Docker builds have no .git; the hash comes in via the GIT_HASH build arg.
   if (process.env.GIT_HASH && process.env.GIT_HASH !== 'unknown') return process.env.GIT_HASH;
   try {
-    return execSync('git rev-parse --short HEAD').toString().trim();
+    return execSync('git rev-parse --short HEAD', {stdio: ['ignore', 'pipe', 'ignore']}).toString().trim();
   } catch {
     return 'unknown';
   }

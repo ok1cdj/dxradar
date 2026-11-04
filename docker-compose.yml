@@ -10,6 +10,8 @@ services:
         VITE_GEMINI_MODEL: ${VITE_GEMINI_MODEL:-}
         VITE_DEEPSEEK_MODEL: ${VITE_DEEPSEEK_MODEL:-}
     image: dxradar
+    # Always build locally; never try to pull "dxradar" from Docker Hub
+    pull_policy: build
     ports:
       # Localhost only; the reverse proxy on the host publishes it
       - "127.0.0.1:3000:3000"

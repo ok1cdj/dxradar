@@ -232,7 +232,8 @@ async function startServer() {
     return segments.some(s => BASE_CALLSIGN_RE.test(s));
   }
 
-  const wss = new WebSocketServer({ noServer: true });
+  // Clients only send small JSON (the manual watch list); cap frames well below the 100 MB default
+  const wss = new WebSocketServer({ noServer: true, maxPayload: 64 * 1024 });
   const PORT = process.env.PORT || 3000;
   const rssParser = new Parser();
 

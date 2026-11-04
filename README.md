@@ -5,6 +5,7 @@ A modern web application for amateur radio (HAM) operators focused on tracking a
 ## 🚀 Key Features
 
 - **Real-time DX Monitoring**: Live spot tracking from DX clusters using WebSockets.
+- **QO-100 Satellite Spots**: FT8/FT4 decodes from a QO-100 skimmer ([QO100-FT-skimmer](#-qo-100-skimmer)) show up as their own `QO100` band on the expedition tiles; hide them with a toggle in Settings.
 - **AI Analysis (Gemini or DeepSeek)**: Choose your AI provider in Settings. Intelligent spot analysis that detects:
   - Operating modes (Fox/Hound, SuperFox, MSHV).
   - Signal strength (distinguishing between FT8 dB and CW SNR scales).
@@ -13,7 +14,7 @@ A modern web application for amateur radio (HAM) operators focused on tracking a
 - **ClubLog Integration**: Automatic check of your QSO status (Worked/Confirmed) for each expedition.
 - **Global Propagation**: Real-time SFI, Kp indices, and HF band conditions (WSPR Index) with forecasts.
 - **Expedition Management**: Database of current expeditions aggregated from NG3K ADXO and HamRadioTimeline.com (by IK8LOV Max Laconca, edited by MM0NDX), featuring visual timeline Gantt charts.
-- **Personalization**: Custom callsign, continent, and ClubLog filter settings.
+- **Personalization**: Custom callsign, continent, and ClubLog filter settings, plus your own manual watch list of callsigns that is private to your browser.
 - **Secure Export & Import**: Securely backup and restore your settings across devices using AES-encrypted files with a custom password.
 
 ## 🛠 Technology Stack
@@ -38,6 +39,12 @@ To unlock the full potential of the app, we recommend configuring the following 
 1. **Callsign**: Your callsign for ClubLog integration.
 2. **ClubLog App Password**: Application-specific password (not your main password).
 3. **AI Provider & API Key**: Pick Gemini or DeepSeek and enter that provider's API key to enable AI-powered spot analysis. Keys are stored only in your browser; the DeepSeek key is forwarded per-request through the server proxy and is never stored server-side.
+4. **Manual Callsigns**: Extra callsigns to watch besides the active expeditions (comma separated). The list is per user: it lives in your browser and other users don't see it.
+5. **Show QO-100 satellite spots**: On by default; turn it off to hide the `QO100` band from the tiles.
+
+### How spot filtering works
+
+The server keeps only spots of *watched* callsigns: the active expeditions plus the manual callsigns of every browser currently connected. Each browser sends its manual list over the WebSocket when it connects and whenever you save Settings; when it disconnects, its calls stop being watched. Every client then shows only its own expeditions and manual calls. Spots heard while nobody watched a manual call are not kept, so after opening the app you see new spots only.
 
 ## 🧑‍💻 Getting Started (Development)
 
@@ -54,6 +61,7 @@ Server-side configuration is optional and lives in `.env` (copy from `.env.examp
 - `DX_CLUSTER_HOST_BACKUP` / `DX_CLUSTER_PORT_BACKUP` — optional backup cluster for automatic failover. The server switches to it when the primary drops or its feed goes silent, and fails back to the primary once it recovers. Leaving `DX_CLUSTER_HOST_BACKUP` empty disables failover. `DX_CLUSTER_STALE_SECONDS` (default `90`) is how long a connected cluster may go completely silent before being treated as an outage; `DX_CLUSTER_FAILBACK_MINUTES` (default `15`) is how often the preferred primary is retried while running on the backup.
 - `CLUBLOG_API_KEY` — required server-side for ClubLog lookups.
 - `DEEPSEEK_API_BASE` — optional override for the DeepSeek API endpoint.
+- `QO100_SKIMMER_URL` / `QO100_SKIMMER_TOKEN` — QO-100 skimmer feed, see [QO-100 Skimmer](#-qo-100-skimmer).
 
 Build-time overrides (Vite env, optional):
 
@@ -89,6 +97,26 @@ Notes:
 - Secrets stay out of the image: `.env` is excluded via `.dockerignore` and passed in at runtime.
 - Because `.env` isn't in the build context, the build-time `VITE_GEMINI_MODEL` / `VITE_DEEPSEEK_MODEL` overrides are passed as build args; Compose fills them in from `.env` or the shell environment.
 - The QO-100 skimmer is reached over the external `radio` network (`docker network create radio` once on the host).
+
+## 🛰 QO-100 Skimmer
+
+DX Radar can take FT8/FT4 spots from a QO100-FT-skimmer instance decoding the QO-100 narrowband transponder. The server polls the skimmer's internal API every 15 s and feeds spots of watched callsigns in like cluster spots (spotter `QO100-#`, continent `EU`, band `QO100`). On startup it replays the last 30 minutes; a call+mode pair is spotted at most once a minute.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `QO100_SKIMMER_URL` | *(unset = feed off)* | Skimmer base URL; in Docker Compose `http://qo100-ft-skimmer-skimmer-1:8080` |
+| `QO100_SKIMMER_TOKEN` | — | Must equal `SKIMMER_INTERNAL_TOKEN` in the skimmer's `.env` |
+| `QO100_SKIMMER_SPOTTER` | `QO100-#` | Spotter name shown on the spots |
+| `QO100_SKIMMER_CONT` | `EU` | Spotter continent (used by "my continent only") |
+
+With Docker Compose both containers share the external `radio` network, and DX Radar reaches the skimmer by its container name. The connection state is logged to stdout:
+
+```bash
+docker compose logs dxradar | grep -i qo-100
+# QO-100 skimmer: connected                → OK
+# QO-100 skimmer unavailable: HTTP 401     → token mismatch or empty
+# QO-100 skimmer unavailable: fetch failed → wrong URL/port or not on the radio network
+```
 
 ## 📋 Logging & Diagnostics
 
